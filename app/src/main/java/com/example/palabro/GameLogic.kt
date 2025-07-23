@@ -1,42 +1,55 @@
 package com.example.palabro
 
+import android.content.Context
 import kotlin.random.Random
 
-// Define los tres estados posibles para cada letra de un intento.
 enum class LetterStatus {
-    CORRECT,          // Letra correcta en la posición correcta (verde)
-    WRONG_POSITION,   // Letra correcta en la posición incorrecta (amarillo)
-    INCORRECT         // La letra no está en la palabra (gris)
+    CORRECT,
+    WRONG_POSITION,
+    INCORRECT
 }
 
-// Esta clase será el "molde" para nuestro motor de juego.
-// Contendrá toda la lógica para que el juego funcione.
-class GameLogic {
+class GameLogic(private val context: Context, val wordLength: Int) {
 
-    // 1. EL DICCIONARIO
-    private val wordList = listOf("CASA", "GATO", "PERRO", "MESA", "SOLAR", "JUEGO", "GOTAS")
+    private var wordList: List<String> = emptyList()
 
-    // 2. ESTADO DEL JUEGO
     var secretWord: String = ""
         private set
 
     val maxAttempts = 6
     val guesses = mutableListOf<String>()
 
-    // 3. INICIO DEL JUEGO
     init {
+        loadWords()
         startNewGame()
     }
 
-    fun startNewGame() {
-        secretWord = wordList.random(Random(System.currentTimeMillis()))
-        guesses.clear()
-        // Para pruebas, podemos imprimir la palabra secreta en la consola de Android Studio
-        println("La palabra secreta es: $secretWord")
+    private fun loadWords() {
+        val resourceId = when (wordLength) {
+            5 -> R.raw.words_5_es
+            6 -> R.raw.words_6_es
+            7 -> R.raw.words_7_es
+            else -> R.raw.words_5_es
+        }
+
+        context.resources.openRawResource(resourceId).bufferedReader().useLines { lines ->
+            wordList = lines.map { it.uppercase() }.toList()
+        }
     }
 
-    // 4. LÓGICA PRINCIPAL (¡AHORA COMPLETA!)
-    // Esta función ahora devuelve una lista con el estado de cada letra.
+    // CAMBIO: Nueva función para comprobar si la palabra existe en la lista.
+    fun isValidWord(word: String): Boolean {
+        return wordList.contains(word.uppercase())
+    }
+
+    fun startNewGame() {
+        if (wordList.isNotEmpty()) {
+            secretWord = wordList.random(Random(System.currentTimeMillis()))
+            guesses.clear()
+            println("La palabra secreta ($wordLength letras) es: $secretWord")
+        }
+    }
+
     fun submitGuess(guess: String): List<LetterStatus> {
         val upperGuess = guess.uppercase()
         guesses.add(upperGuess)
@@ -44,30 +57,21 @@ class GameLogic {
         val result = MutableList(secretWord.length) { LetterStatus.INCORRECT }
         val secretWordLetterCounts = secretWord.groupingBy { it }.eachCount().toMutableMap()
 
-        // --- PASO 1: Buscar aciertos directos (CORRECT - verdes) ---
-        // Primero recorremos la palabra para encontrar las letras que están en la posición correcta.
-        // Esto es importante para gestionar letras duplicadas correctamente.
         upperGuess.forEachIndexed { index, char ->
             if (index < secretWord.length && char == secretWord[index]) {
                 result[index] = LetterStatus.CORRECT
-                // Decrementamos el contador de esta letra para no volver a usarla.
                 secretWordLetterCounts[char] = secretWordLetterCounts.getOrDefault(char, 0) - 1
             }
         }
 
-        // --- PASO 2: Buscar letras en posición incorrecta (WRONG_POSITION - amarillas) ---
-        // Volvemos a recorrer la palabra para encontrar las letras que sí existen, pero en otro sitio.
         upperGuess.forEachIndexed { index, char ->
-            // Solo procesamos las que no fueron aciertos directos en el paso 1.
             if (result[index] == LetterStatus.INCORRECT) {
                 if (secretWordLetterCounts.getOrDefault(char, 0) > 0) {
                     result[index] = LetterStatus.WRONG_POSITION
-                    // Decrementamos el contador para no marcarla de nuevo si aparece otra vez.
                     secretWordLetterCounts[char] = secretWordLetterCounts.getOrDefault(char, 0) - 1
                 }
             }
         }
-
         return result
     }
 }
