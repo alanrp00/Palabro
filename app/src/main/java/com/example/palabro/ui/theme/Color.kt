@@ -2,10 +2,21 @@ package com.example.palabro.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// --- TEMA CLARO (Lo mantenemos como estaba) ---
+val LightPrimary = Color(0xFF4CAF50)
+val LightBackground = Color(0xFFFFFFFF)
+val LightSurface = Color(0xFFF1F1F1)
+val LightOnPrimary = Color.White
+val LightOnBackground = Color.Black
+val LightOnSurface = Color.Black
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// --- TEMA OSCURO (Inspirado en Offsuit) ---
+// Usamos un verde vibrante como color primario/acento
+val DarkPrimary = Color(0xFF3DDC84)
+// Un fondo gris muy oscuro, casi negro, pero más suave
+val DarkBackground = Color(0xFF1A1A1A)
+// Un gris un poco más claro para las superficies como el teclado
+val DarkSurface = Color(0xFF2C2C2C)
+val DarkOnPrimary = Color.Black
+val DarkOnBackground = Color.White
+val DarkOnSurface = Color.White
