@@ -1,16 +1,9 @@
 package com.example.palabro
 
 import android.content.Context
-import kotlin.random.Random
 import android.util.Log
+import kotlin.random.Random
 
-enum class LetterStatus {
-    CORRECT,
-    WRONG_POSITION,
-    INCORRECT
-}
-
-// CAMBIO: Pequeña función para quitar acentos de las palabras.
 private fun String.normalize(): String {
     return this.replace('Á', 'A')
         .replace('É', 'E')
@@ -21,9 +14,9 @@ private fun String.normalize(): String {
 
 class GameLogic(private val context: Context, val wordLength: Int) {
 
-    private val TAG = "GameLogic" // Etiqueta para nuestros mensajes
+    private val tag = "GameLogic" // Convención de Kotlin: minúsculas para tags privados
+
     private var wordList: List<String> = emptyList()
-    // CAMBIO: Un conjunto de palabras normalizadas para una validación más rápida.
     private var normalizedWordSet: Set<String> = emptySet()
 
     var secretWord: String = ""
@@ -48,14 +41,11 @@ class GameLogic(private val context: Context, val wordLength: Int) {
         context.resources.openRawResource(resourceId).bufferedReader().useLines { lines ->
             val words = lines.map { it.uppercase() }.toList()
             wordList = words
-            // CAMBIO: Creamos la lista de palabras sin acentos para la validación.
             normalizedWordSet = words.map { it.normalize() }.toSet()
         }
     }
 
-    // CAMBIO: Ahora comprueba contra la lista de palabras sin acentos.
     fun isValidWord(word: String): Boolean {
-        // El 'word' del usuario no tendrá acentos, así que la comprobación es directa.
         return normalizedWordSet.contains(word.uppercase())
     }
 
@@ -63,7 +53,7 @@ class GameLogic(private val context: Context, val wordLength: Int) {
         if (wordList.isNotEmpty()) {
             secretWord = wordList.random(Random(System.currentTimeMillis()))
             guesses.clear()
-            Log.d(TAG, "La palabra secreta ($wordLength letras) es: $secretWord (Normalizada: ${secretWord.normalize()})")
+            Log.d(tag, "La palabra secreta ($wordLength letras) es: $secretWord")
         }
     }
 
@@ -71,7 +61,6 @@ class GameLogic(private val context: Context, val wordLength: Int) {
         val upperGuess = guess.uppercase()
         guesses.add(upperGuess)
 
-        // CAMBIO: Comparamos el intento del usuario (sin acentos) con la palabra secreta normalizada.
         val normalizedSecretWord = secretWord.normalize()
 
         val result = MutableList(normalizedSecretWord.length) { LetterStatus.INCORRECT }
