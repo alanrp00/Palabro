@@ -69,8 +69,6 @@ fun GameScreen() {
     var shakeTrigger by remember { mutableStateOf(0) }
 
     LaunchedEffect(gameLogic) {
-        // Al cambiar la lógica (por cambiar la longitud), solo limpiamos la UI.
-        // GameLogic ya genera una palabra nueva en su 'init'.
         submittedGuesses = emptyList()
         currentGuess = ""
         gameStatus = GameStatus.PLAYING
@@ -111,10 +109,12 @@ fun GameScreen() {
 
                 if (statuses.all { it == LetterStatus.CORRECT }) {
                     gameStatus = GameStatus.WON
-                    scope.launch { statsManager.incrementWins() }
+                    // CAMBIO AQUÍ: Pasamos la longitud de la palabra
+                    scope.launch { statsManager.incrementWins(wordLength) }
                 } else if (submittedGuesses.size >= gameLogic.maxAttempts) {
                     gameStatus = GameStatus.LOST
-                    scope.launch { statsManager.incrementLosses() }
+                    // CAMBIO AQUÍ: Pasamos la longitud de la palabra
+                    scope.launch { statsManager.incrementLosses(wordLength) }
                 }
                 currentGuess = ""
             } else {
