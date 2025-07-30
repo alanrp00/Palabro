@@ -58,16 +58,16 @@ fun GameScreen(gameViewModel: GameViewModel) {
     if (uiState.showHintDialog) {
         AlertDialog(
             onDismissRequest = { gameViewModel.onHintDismiss() },
-            title = { Text("¿Usar una pista?") },
-            text = { Text("¿Quieres revelar una letra correcta que aún no has adivinado?") },
+            title = { Text("Pista") },
+            text = { Text("Revelar una letra correcta?") },
             confirmButton = {
                 TextButton(onClick = { gameViewModel.onHintConfirm() }) {
-                    Text("Sí")
+                    Text("Revelar")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { gameViewModel.onHintDismiss() }) {
-                    Text("No")
+                    Text("Cancelar")
                 }
             }
         )
