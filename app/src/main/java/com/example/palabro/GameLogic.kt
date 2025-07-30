@@ -83,4 +83,30 @@ class GameLogic(private val context: Context, val wordLength: Int) {
         }
         return result
     }
+
+    fun getHint(currentGuess: String): Pair<Int, Char>? {
+        // 1. Encontrar los índices de letras que aún no se han adivinado correctamente.
+        val unguessedIndices = secretWord.indices.filter { index ->
+            // La letra en esta posición no es correcta en ninguna de las palabras ya enviadas
+            val notGuessedCorrectly = guesses.all { guess ->
+                guess.getOrNull(index) != secretWord[index]
+            }
+            // Y tampoco está en el intento actual
+            val notInCurrentGuess = currentGuess.getOrNull(index) != secretWord[index]
+
+            notGuessedCorrectly && notInCurrentGuess
+        }
+
+        // 2. Si no hay letras que revelar, devuelve null.
+        if (unguessedIndices.isEmpty()) {
+            return null
+        }
+
+        // 3. Elige un índice al azar de las opciones disponibles.
+        val randomIndex = unguessedIndices.random()
+
+        // 4. Devuelve el par (índice, letra correcta).
+        return Pair(randomIndex, secretWord[randomIndex])
+    }
+
 }

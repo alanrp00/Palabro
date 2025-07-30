@@ -107,9 +107,34 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onHintConfirm() {
-        // Lógica para revelar la letra
-        _uiState.update { it.copy(showHintDialog = false) }
-        // TODO: Implementar la lógica para obtener y mostrar la pista.
+        // Pide una pista a la lógica del juego, pasándole el intento actual.
+        val hint = gameLogic.getHint(uiState.value.currentGuess)
+
+        // Si se encontró una pista (hint no es null)
+        if (hint != null) {
+            val (index, letter) = hint
+            val currentGuess = uiState.value.currentGuess.toCharArray()
+
+            // Rellenamos el resto de la palabra con espacios si es necesario
+            val newGuess = CharArray(gameLogic.wordLength) { i ->
+                currentGuess.getOrNull(i) ?: ' '
+            }
+
+            // Colocamos la letra de la pista en su posición correcta
+            newGuess[index] = letter
+
+            // Actualizamos el estado de la UI con la nueva palabra y cerramos el diálogo
+            _uiState.update {
+                it.copy(
+                    currentGuess = String(newGuess).replace(' ', '\u0000'), // Reemplaza espacios por caracter nulo si es necesario
+                    showHintDialog = false
+                )
+            }
+        } else {
+            // Si no hay pistas disponibles, simplemente cierra el diálogo
+            _uiState.update { it.copy(showHintDialog = false) }
+            // Opcional: Podrías mostrar un mensaje tipo "No hay más pistas disponibles".
+        }
     }
 
     fun onHintDismiss() {
