@@ -49,9 +49,30 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun submitGuess() {
-        val guess = uiState.value.currentGuess
-        if (guess.length != gameLogic.wordLength) return
+        // --- INICIO DE LA NUEVA LÓGICA ---
+        // 1. Reconstruimos la palabra completa que ve el usuario.
+        val fullWordChars = CharArray(gameLogic.wordLength)
+        var guessPointer = 0
+        for (i in 0 until gameLogic.wordLength) {
+            if (uiState.value.revealedHints.containsKey(i)) {
+                // Si hay una pista en esta posición, la usamos.
+                fullWordChars[i] = uiState.value.revealedHints.getValue(i)
+            } else {
+                // Si no, usamos la siguiente letra escrita por el usuario.
+                if (guessPointer < uiState.value.currentGuess.length) {
+                    fullWordChars[i] = uiState.value.currentGuess[guessPointer]
+                    guessPointer++
+                } else {
+                    // Si llegamos aquí, la palabra no está completa, no hacemos nada.
+                    return
+                }
+            }
+        }
+        val guess = String(fullWordChars)
+        // --- FIN DE LA NUEVA LÓGICA ---
 
+
+        // 2. El resto de la función usa la palabra completa que acabamos de construir.
         if (gameLogic.isValidWord(guess)) {
             val statuses = gameLogic.submitGuess(guess)
             val newSubmittedGuesses = uiState.value.submittedGuesses + Guess(guess, statuses)
@@ -74,9 +95,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update { currentState ->
                 currentState.copy(
                     submittedGuesses = newSubmittedGuesses,
-                    currentGuess = "",
+                    currentGuess = "", // Limpiamos el input del usuario
                     keyStatuses = newKeyStatuses,
-                    gameStatus = newGameStatus
+                    gameStatus = newGameStatus,
+                    revealedHints = emptyMap() // Limpiamos las pistas para la siguiente fila
                 )
             }
         } else {
