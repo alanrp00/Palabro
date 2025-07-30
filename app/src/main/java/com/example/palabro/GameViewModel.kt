@@ -12,10 +12,7 @@ import kotlinx.coroutines.launch
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
-    // --- INICIO DEL CAMBIO ---
-    // Obtenemos la instancia única de SettingsManager
     private val settingsManager = SettingsManager.getInstance(application)
-    // --- FIN DEL CAMBIO ---
 
     private lateinit var gameLogic: GameLogic
 
@@ -25,15 +22,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val secretWord: String
         get() = if (::gameLogic.isInitialized) gameLogic.secretWord else ""
 
-    // El bloque init se ejecuta cuando el ViewModel es creado por primera vez.
     init {
-        // Usamos viewModelScope para lanzar una corrutina que inicializa el juego.
         viewModelScope.launch {
-            // Leemos la longitud de la palabra guardada en las preferencias
             val initialWordLength = settingsManager.settingsFlow.first().wordLength
-            // Creamos GameLogic con la longitud correcta
             gameLogic = GameLogic(application, initialWordLength)
-            // Establecemos el estado inicial de la UI
             _uiState.value = GameUiState(wordLength = initialWordLength)
         }
     }
@@ -102,13 +94,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         ) }
     }
 
-    // Ahora, al cambiar la longitud, también la guardamos en las preferencias
     fun changeWordLength(newLength: Int) {
         viewModelScope.launch {
             settingsManager.setWordLength(newLength)
             gameLogic = GameLogic(getApplication(), newLength)
             _uiState.value = GameUiState(wordLength = newLength)
         }
+    }
+
+    fun onHintPressed() {
+        _uiState.update { it.copy(showHintDialog = true) }
+    }
+
+    fun onHintConfirm() {
+        // Lógica para revelar la letra
+        _uiState.update { it.copy(showHintDialog = false) }
+        // TODO: Implementar la lógica para obtener y mostrar la pista.
+    }
+
+    fun onHintDismiss() {
+        _uiState.update { it.copy(showHintDialog = false) }
     }
 }
 
@@ -117,5 +122,6 @@ data class GameUiState(
     val submittedGuesses: List<Guess> = emptyList(),
     val currentGuess: String = "",
     val keyStatuses: Map<Char, LetterStatus> = emptyMap(),
-    val gameStatus: GameStatus = GameStatus.PLAYING
+    val gameStatus: GameStatus = GameStatus.PLAYING,
+    val showHintDialog: Boolean = false
 )

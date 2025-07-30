@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardReturn
 import androidx.compose.material.icons.filled.Backspace
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,22 +16,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel // Importación necesaria
 import com.example.palabro.ui.theme.LocalGameColors
 
 @Composable
-fun GameScreen(
-    // Obtenemos la instancia del ViewModel. Compose se encargará de que sobreviva
-    // a rotaciones y cambios de configuración.
-    gameViewModel: GameViewModel = viewModel()
-) {
-    // Recolectamos el estado (uiState) del ViewModel.
-    // Cada vez que el estado cambie en el ViewModel, esta variable se actualizará
-    // y la UI se recompondrá automáticamente.
+fun GameScreen(gameViewModel: GameViewModel) {
     val uiState by gameViewModel.uiState.collectAsState()
-
-    // El resto de la lógica (settingsManager, statsManager, scopes, etc.)
-    // se moverá al ViewModel cuando sea necesario, simplificando la UI.
 
     Column(
         modifier = Modifier
@@ -41,7 +31,6 @@ fun GameScreen(
     ) {
         WordLengthSelector(
             selectedLength = uiState.wordLength,
-            // Cuando se selecciona una nueva longitud, llamamos al método del ViewModel.
             onLengthSelected = { gameViewModel.changeWordLength(it) }
         )
 
@@ -49,30 +38,41 @@ fun GameScreen(
             wordLength = uiState.wordLength,
             submittedGuesses = uiState.submittedGuesses,
             currentGuess = uiState.currentGuess,
-            shakeOffset = 0f // La lógica del shake se puede añadir después en el ViewModel
+            shakeOffset = 0f
         )
 
-        // El teclado ahora solo notifica al ViewModel qué tecla se pulsó.
         GameKeyboard(
             keyStatuses = uiState.keyStatuses,
             onKeyClick = { gameViewModel.onKey(it) }
         )
     }
 
-    // El diálogo de resultado también se controla con el estado del ViewModel.
     if (uiState.gameStatus != GameStatus.PLAYING) {
         GameResultDialog(
             status = uiState.gameStatus,
             secretWord = gameViewModel.secretWord,
-            // Al cerrar el diálogo, llamamos al método para reiniciar el juego.
             onDismiss = { gameViewModel.resetGame() }
         )
     }
+
+    if (uiState.showHintDialog) {
+        AlertDialog(
+            onDismissRequest = { gameViewModel.onHintDismiss() },
+            title = { Text("¿Usar una pista?") },
+            text = { Text("¿Quieres revelar una letra correcta que aún no has adivinado?") },
+            confirmButton = {
+                TextButton(onClick = { gameViewModel.onHintConfirm() }) {
+                    Text("Sí")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { gameViewModel.onHintDismiss() }) {
+                    Text("No")
+                }
+            }
+        )
+    }
 }
-
-
-// --- El resto de composables de la pantalla (WordLengthSelector, LetterBox, etc.) ---
-// --- no necesitan cambios, ya que solo muestran datos. ---
 
 @Composable
 fun WordLengthSelector(

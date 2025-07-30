@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
@@ -25,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -47,6 +49,9 @@ fun AppNavigation() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Creamos la instancia del ViewModel aquí, para que pueda ser compartida.
+    val gameViewModel: GameViewModel = viewModel()
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -62,10 +67,17 @@ fun AppNavigation() {
                 TopAppBar(
                     title = { Text("Palabro") },
                     navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch { drawerState.open() }
-                        }) {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menú")
+                        }
+                    },
+                    // Añadimos la sección de "acciones" a la barra.
+                    actions = {
+                        // Solo mostramos el botón de pista si estamos en la pantalla del juego.
+                        if (currentRoute == AppRoutes.GAME) {
+                            IconButton(onClick = { gameViewModel.onHintPressed() }) {
+                                Icon(Icons.Default.Lightbulb, contentDescription = "Pista")
+                            }
                         }
                     }
                 )
@@ -76,8 +88,9 @@ fun AppNavigation() {
                 navController = navController,
                 startDestination = AppRoutes.GAME
             ) {
+                // Le pasamos la instancia del ViewModel a la pantalla del juego.
                 composable(AppRoutes.GAME) {
-                    GameScreen()
+                    GameScreen(gameViewModel)
                 }
                 composable(AppRoutes.SETTINGS) {
                     SettingsScreen()
@@ -99,39 +112,33 @@ fun AppDrawerContent(
     ModalDrawerSheet {
         Spacer(Modifier.height(12.dp))
 
-        // --- INICIO DEL CAMBIO ---
-        // Definimos la acción de navegación una sola vez para evitar errores.
         val navigateToScreen: (String) -> Unit = { route ->
             navController.navigate(route) {
-                // Vuelve al inicio del gráfico de navegación (GameScreen)
-                // para evitar acumular pantallas.
                 popUpTo(navController.graph.startDestinationId)
-                // Asegura que el estado de la pantalla se guarde y restaure.
                 launchSingleTop = true
             }
             closeDrawer()
         }
-        // --- FIN DEL CAMBIO ---
 
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Home, contentDescription = null) },
             label = { Text("Jugar") },
             selected = currentRoute == AppRoutes.GAME,
-            onClick = { navigateToScreen(AppRoutes.GAME) }, // Usamos la nueva acción
+            onClick = { navigateToScreen(AppRoutes.GAME) },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.BarChart, contentDescription = null) },
             label = { Text("Estadísticas") },
             selected = currentRoute == AppRoutes.STATS,
-            onClick = { navigateToScreen(AppRoutes.STATS) }, // Usamos la nueva acción
+            onClick = { navigateToScreen(AppRoutes.STATS) },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Settings, contentDescription = null) },
             label = { Text("Ajustes") },
             selected = currentRoute == AppRoutes.SETTINGS,
-            onClick = { navigateToScreen(AppRoutes.SETTINGS) }, // Usamos la nueva acción
+            onClick = { navigateToScreen(AppRoutes.SETTINGS) },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
     }
