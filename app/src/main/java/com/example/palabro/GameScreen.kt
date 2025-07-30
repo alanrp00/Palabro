@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardReturn
 import androidx.compose.material.icons.filled.Backspace
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,22 +16,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel // Importación necesaria
 import com.example.palabro.ui.theme.LocalGameColors
 
 @Composable
-fun GameScreen(
-    // Obtenemos la instancia del ViewModel. Compose se encargará de que sobreviva
-    // a rotaciones y cambios de configuración.
-    gameViewModel: GameViewModel = viewModel()
-) {
-    // Recolectamos el estado (uiState) del ViewModel.
-    // Cada vez que el estado cambie en el ViewModel, esta variable se actualizará
-    // y la UI se recompondrá automáticamente.
+fun GameScreen(gameViewModel: GameViewModel) {
     val uiState by gameViewModel.uiState.collectAsState()
-
-    // El resto de la lógica (settingsManager, statsManager, scopes, etc.)
-    // se moverá al ViewModel cuando sea necesario, simplificando la UI.
 
     Column(
         modifier = Modifier
@@ -41,7 +31,6 @@ fun GameScreen(
     ) {
         WordLengthSelector(
             selectedLength = uiState.wordLength,
-            // Cuando se selecciona una nueva longitud, llamamos al método del ViewModel.
             onLengthSelected = { gameViewModel.changeWordLength(it) }
         )
 
@@ -49,30 +38,42 @@ fun GameScreen(
             wordLength = uiState.wordLength,
             submittedGuesses = uiState.submittedGuesses,
             currentGuess = uiState.currentGuess,
-            shakeOffset = 0f // La lógica del shake se puede añadir después en el ViewModel
+            shakeOffset = 0f,
+            uiState = uiState
         )
 
-        // El teclado ahora solo notifica al ViewModel qué tecla se pulsó.
         GameKeyboard(
             keyStatuses = uiState.keyStatuses,
             onKeyClick = { gameViewModel.onKey(it) }
         )
     }
 
-    // El diálogo de resultado también se controla con el estado del ViewModel.
     if (uiState.gameStatus != GameStatus.PLAYING) {
         GameResultDialog(
             status = uiState.gameStatus,
             secretWord = gameViewModel.secretWord,
-            // Al cerrar el diálogo, llamamos al método para reiniciar el juego.
             onDismiss = { gameViewModel.resetGame() }
         )
     }
+
+    if (uiState.showHintDialog) {
+        AlertDialog(
+            onDismissRequest = { gameViewModel.onHintDismiss() },
+            title = { Text("Pista") },
+            text = { Text("Revelar una letra correcta?") },
+            confirmButton = {
+                TextButton(onClick = { gameViewModel.onHintConfirm() }) {
+                    Text("Revelar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { gameViewModel.onHintDismiss() }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
-
-
-// --- El resto de composables de la pantalla (WordLengthSelector, LetterBox, etc.) ---
-// --- no necesitan cambios, ya que solo muestran datos. ---
 
 @Composable
 fun WordLengthSelector(
@@ -160,7 +161,8 @@ fun GameBoard(
     wordLength: Int,
     submittedGuesses: List<Guess>,
     currentGuess: String,
-    shakeOffset: Float
+    shakeOffset: Float,
+    uiState: GameUiState
 ) {
     val maxAttempts = 6
     val currentAttemptIndex = submittedGuesses.size
@@ -182,7 +184,8 @@ fun GameBoard(
                 word = word,
                 statuses = statuses,
                 isActiveRow = (i == currentAttemptIndex),
-                modifier = Modifier.offset(x = rowOffset.dp)
+                modifier = Modifier.offset(x = rowOffset.dp),
+                revealedHints = uiState.revealedHints // <-- AÑADE ESTA LÍNEA
             )
         }
     }
@@ -194,16 +197,51 @@ fun WordRow(
     word: String,
     statuses: List<LetterStatus>?,
     isActiveRow: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    revealedHints: Map<Int, Char> = emptyMap()
 ) {
+    // Puntero para saber qué letra de la palabra del usuario (word) toca poner.
+    var guessPointer = 0
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         for (i in 0 until wordLength) {
-            val letter = word.getOrNull(i)
-            val status = statuses?.getOrNull(i)
-            val isCurrentLetter = isActiveRow && i == word.length
+            val letter: Char?
+            var status: LetterStatus? = null
+
+            if (isActiveRow) {
+                // --- INICIO DE LA NUEVA LÓGICA ---
+                if (revealedHints.containsKey(i)) {
+                    // Si la celda actual (i) tiene una pista, la mostramos.
+                    letter = revealedHints[i]
+                    status = LetterStatus.CORRECT // La pintamos de verde
+                } else {
+                    // Si no tiene una pista, es una celda para el usuario.
+                    // Usamos el puntero para coger la siguiente letra que ha escrito.
+                    letter = word.getOrNull(guessPointer)
+                    status = null
+                    // Si hemos puesto una letra, avanzamos el puntero.
+                    if (letter != null) {
+                        guessPointer++
+                    }
+                }
+                // --- FIN DE LA NUEVA LÓGICA ---
+            } else {
+                // Para las filas ya enviadas, la lógica no cambia.
+                letter = word.getOrNull(i)
+                status = statuses?.getOrNull(i)
+            }
+
+            // --- LÓGICA DEL CURSOR ACTUALIZADA ---
+            // Buscamos la primera celda que no tenga pista. Esa es la siguiente posición libre.
+            val nextFreeSlot = (0 until wordLength).firstOrNull { j -> !revealedHints.containsKey(j) } ?: 0
+            // El cursor estará en la primera celda libre que venga después de las letras ya escritas.
+            val cursorPosition = (nextFreeSlot until wordLength)
+                .find { j -> !revealedHints.containsKey(j) && j >= guessPointer } ?: guessPointer
+
+            val isCurrentLetter = isActiveRow && i == cursorPosition
 
             LetterBox(
                 letter = letter,

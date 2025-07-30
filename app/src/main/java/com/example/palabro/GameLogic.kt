@@ -83,4 +83,24 @@ class GameLogic(private val context: Context, val wordLength: Int) {
         }
         return result
     }
+
+    fun getHint(currentGuess: String, revealedHints: Map<Int, Char>): Pair<Int, Char>? {
+        val unguessedIndices = secretWord.indices.filter { index ->
+            val notGuessedCorrectly = guesses.all { guess ->
+                guess.getOrNull(index) != secretWord[index]
+            }
+            val notInCurrentGuess = currentGuess.getOrNull(index) != secretWord[index]
+            val notAlreadyRevealed = !revealedHints.containsKey(index) // <-- AÑADE ESTA LÍNEA
+
+            notGuessedCorrectly && notInCurrentGuess && notAlreadyRevealed // <-- Y MODIFICA AQUÍ
+        }
+
+        if (unguessedIndices.isEmpty()) {
+            return null
+        }
+
+        val randomIndex = unguessedIndices.random()
+        return Pair(randomIndex, secretWord[randomIndex])
+    }
+
 }
