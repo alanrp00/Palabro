@@ -90,7 +90,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             submittedGuesses = emptyList(),
             currentGuess = "",
             keyStatuses = emptyMap(),
-            gameStatus = GameStatus.PLAYING
+            gameStatus = GameStatus.PLAYING,
+            revealedHints = emptyMap()
         ) }
     }
 
@@ -107,33 +108,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onHintConfirm() {
-        // Pide una pista a la lógica del juego, pasándole el intento actual.
-        val hint = gameLogic.getHint(uiState.value.currentGuess)
+        // Pasamos el mapa de pistas actual a la lógica
+        val hint = gameLogic.getHint(uiState.value.currentGuess, uiState.value.revealedHints)
 
-        // Si se encontró una pista (hint no es null)
         if (hint != null) {
             val (index, letter) = hint
-            val currentGuess = uiState.value.currentGuess.toCharArray()
-
-            // Rellenamos el resto de la palabra con espacios si es necesario
-            val newGuess = CharArray(gameLogic.wordLength) { i ->
-                currentGuess.getOrNull(i) ?: ' '
-            }
-
-            // Colocamos la letra de la pista en su posición correcta
-            newGuess[index] = letter
-
-            // Actualizamos el estado de la UI con la nueva palabra y cerramos el diálogo
+            // Actualizamos el mapa de pistas, añadiendo la nueva
+            val newHints = uiState.value.revealedHints + (index to letter)
             _uiState.update {
                 it.copy(
-                    currentGuess = String(newGuess).replace(' ', '\u0000'), // Reemplaza espacios por caracter nulo si es necesario
+                    revealedHints = newHints,
                     showHintDialog = false
                 )
             }
         } else {
-            // Si no hay pistas disponibles, simplemente cierra el diálogo
             _uiState.update { it.copy(showHintDialog = false) }
-            // Opcional: Podrías mostrar un mensaje tipo "No hay más pistas disponibles".
         }
     }
 
@@ -148,5 +137,6 @@ data class GameUiState(
     val currentGuess: String = "",
     val keyStatuses: Map<Char, LetterStatus> = emptyMap(),
     val gameStatus: GameStatus = GameStatus.PLAYING,
-    val showHintDialog: Boolean = false
+    val showHintDialog: Boolean = false,
+    val revealedHints: Map<Int, Char> = emptyMap() // <-- AÑADE ESTA LÍNEA
 )
