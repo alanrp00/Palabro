@@ -6,29 +6,38 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// El ViewModel ahora necesita el "contexto" de la aplicación para poder crear GameLogic.
-// Por eso heredamos de AndroidViewModel en lugar de ViewModel.
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
-    // Instancia de la lógica del juego, ahora vive dentro del ViewModel.
-    // La inicializamos con 5 letras por defecto, luego la cambiaremos.
-    private var gameLogic = GameLogic(application, 5)
+    // --- INICIO DEL CAMBIO ---
+    // Obtenemos la instancia única de SettingsManager
+    private val settingsManager = SettingsManager.getInstance(application)
+    // --- FIN DEL CAMBIO ---
 
-    // --- ESTADO DEL JUEGO (STATE) ---
-    // Usamos StateFlow para que la UI (la pantalla) pueda observar los cambios.
-    // El guion bajo (_) indica que es una variable privada y mutable.
+    private lateinit var gameLogic: GameLogic
+
     private val _uiState = MutableStateFlow(GameUiState())
-    // Esta es la versión pública e inmutable que la UI podrá leer.
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     val secretWord: String
-        get() = gameLogic.secretWord
+        get() = if (::gameLogic.isInitialized) gameLogic.secretWord else ""
 
-    // --- MANEJADORES DE EVENTOS (EVENTS) ---
-    // Esta función será llamada cuando el usuario pulse una tecla.
+    // El bloque init se ejecuta cuando el ViewModel es creado por primera vez.
+    init {
+        // Usamos viewModelScope para lanzar una corrutina que inicializa el juego.
+        viewModelScope.launch {
+            // Leemos la longitud de la palabra guardada en las preferencias
+            val initialWordLength = settingsManager.settingsFlow.first().wordLength
+            // Creamos GameLogic con la longitud correcta
+            gameLogic = GameLogic(application, initialWordLength)
+            // Establecemos el estado inicial de la UI
+            _uiState.value = GameUiState(wordLength = initialWordLength)
+        }
+    }
+
     fun onKey(key: String) {
         if (uiState.value.gameStatus != GameStatus.PLAYING) return
 
@@ -47,7 +56,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Función para procesar un intento.
     private fun submitGuess() {
         val guess = uiState.value.currentGuess
         if (guess.length != gameLogic.wordLength) return
@@ -56,7 +64,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val statuses = gameLogic.submitGuess(guess)
             val newSubmittedGuesses = uiState.value.submittedGuesses + Guess(guess, statuses)
 
-            // Actualizar el estado de las teclas del teclado
             val newKeyStatuses = uiState.value.keyStatuses.toMutableMap()
             guess.uppercase().forEachIndexed { index, char ->
                 val currentStatus = newKeyStatuses[char]
@@ -66,14 +73,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
-            // Comprobar si el juego ha terminado (victoria o derrota)
             val newGameStatus = when {
                 statuses.all { it == LetterStatus.CORRECT } -> GameStatus.WON
                 newSubmittedGuesses.size >= gameLogic.maxAttempts -> GameStatus.LOST
                 else -> GameStatus.PLAYING
             }
 
-            // Actualizar todo el estado de la UI de una vez
             _uiState.update { currentState ->
                 currentState.copy(
                     submittedGuesses = newSubmittedGuesses,
@@ -83,27 +88,30 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
         } else {
-            // TODO: Añadir la lógica para la animación de vibración (shake)
+            // TODO: Shake animation
         }
     }
 
-    // Función para reiniciar el juego
     fun resetGame() {
         gameLogic.startNewGame()
-        _uiState.value = GameUiState(wordLength = gameLogic.wordLength) // Reinicia al estado inicial
+        _uiState.update { it.copy(
+            submittedGuesses = emptyList(),
+            currentGuess = "",
+            keyStatuses = emptyMap(),
+            gameStatus = GameStatus.PLAYING
+        ) }
     }
 
-    // Función para cambiar la longitud de la palabra
+    // Ahora, al cambiar la longitud, también la guardamos en las preferencias
     fun changeWordLength(newLength: Int) {
-        gameLogic = GameLogic(getApplication(), newLength)
-        resetGame()
+        viewModelScope.launch {
+            settingsManager.setWordLength(newLength)
+            gameLogic = GameLogic(getApplication(), newLength)
+            _uiState.value = GameUiState(wordLength = newLength)
+        }
     }
 }
 
-
-// --- DATA CLASS PARA EL ESTADO DE LA UI ---
-// Agrupamos todas las variables de estado en una sola clase.
-// Esto hace que el código sea más limpio y fácil de mantener.
 data class GameUiState(
     val wordLength: Int = 5,
     val submittedGuesses: List<Guess> = emptyList(),
