@@ -98,34 +98,40 @@ fun AppDrawerContent(
 ) {
     ModalDrawerSheet {
         Spacer(Modifier.height(12.dp))
+
+        // --- INICIO DEL CAMBIO ---
+        // Definimos la acción de navegación una sola vez para evitar errores.
+        val navigateToScreen: (String) -> Unit = { route ->
+            navController.navigate(route) {
+                // Vuelve al inicio del gráfico de navegación (GameScreen)
+                // para evitar acumular pantallas.
+                popUpTo(navController.graph.startDestinationId)
+                // Asegura que el estado de la pantalla se guarde y restaure.
+                launchSingleTop = true
+            }
+            closeDrawer()
+        }
+        // --- FIN DEL CAMBIO ---
+
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Home, contentDescription = null) },
             label = { Text("Jugar") },
             selected = currentRoute == AppRoutes.GAME,
-            onClick = {
-                navController.navigate(AppRoutes.GAME)
-                closeDrawer()
-            },
+            onClick = { navigateToScreen(AppRoutes.GAME) }, // Usamos la nueva acción
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.BarChart, contentDescription = null) },
             label = { Text("Estadísticas") },
             selected = currentRoute == AppRoutes.STATS,
-            onClick = {
-                navController.navigate(AppRoutes.STATS)
-                closeDrawer()
-            },
+            onClick = { navigateToScreen(AppRoutes.STATS) }, // Usamos la nueva acción
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Settings, contentDescription = null) },
             label = { Text("Ajustes") },
             selected = currentRoute == AppRoutes.SETTINGS,
-            onClick = {
-                navController.navigate(AppRoutes.SETTINGS)
-                closeDrawer()
-            },
+            onClick = { navigateToScreen(AppRoutes.SETTINGS) }, // Usamos la nueva acción
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
     }

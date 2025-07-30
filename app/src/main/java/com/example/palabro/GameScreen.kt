@@ -1,147 +1,36 @@
 package com.example.palabro
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardReturn
 import androidx.compose.material.icons.filled.Backspace
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel // Importación necesaria
 import com.example.palabro.ui.theme.LocalGameColors
-import com.example.palabro.ui.theme.ThemeStyle
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
-fun GameScreen() {
-    val context = LocalContext.current
-    val settingsManager = remember { SettingsManager(context) }
-    val settings by settingsManager.settingsFlow.collectAsState(
-        initial = UserSettings(ThemeStyle.SYSTEM, 5)
-    )
+fun GameScreen(
+    // Obtenemos la instancia del ViewModel. Compose se encargará de que sobreviva
+    // a rotaciones y cambios de configuración.
+    gameViewModel: GameViewModel = viewModel()
+) {
+    // Recolectamos el estado (uiState) del ViewModel.
+    // Cada vez que el estado cambie en el ViewModel, esta variable se actualizará
+    // y la UI se recompondrá automáticamente.
+    val uiState by gameViewModel.uiState.collectAsState()
 
-    val wordLength = settings.wordLength
-    val gameLogic = remember(wordLength) { GameLogic(context, wordLength) }
-
-    val statsManager = remember { StatsManager(context) }
-    val scope = rememberCoroutineScope()
-
-    var currentGuess by remember { mutableStateOf("") }
-    var submittedGuesses by remember { mutableStateOf<List<Guess>>(emptyList()) }
-    var gameStatus by remember { mutableStateOf(GameStatus.PLAYING) }
-    var keyStatuses by remember { mutableStateOf<Map<Char, LetterStatus>>(emptyMap()) }
-
-    val shakeController = remember { Animatable(0f) }
-    var shakeTrigger by remember { mutableStateOf(0) }
-
-    LaunchedEffect(gameLogic) {
-        submittedGuesses = emptyList()
-        currentGuess = ""
-        gameStatus = GameStatus.PLAYING
-        keyStatuses = emptyMap()
-    }
-
-    LaunchedEffect(shakeTrigger) {
-        if (shakeTrigger > 0) {
-            shakeController.animateTo(1f, tween(durationMillis = 500))
-            shakeController.snapTo(0f)
-        }
-    }
-
-    val resetGame = {
-        gameLogic.startNewGame()
-        submittedGuesses = emptyList()
-        currentGuess = ""
-        gameStatus = GameStatus.PLAYING
-        keyStatuses = emptyMap()
-    }
-
-    val onSubmitGuess = {
-        if (currentGuess.length == wordLength && gameStatus == GameStatus.PLAYING) {
-            if (gameLogic.isValidWord(currentGuess)) {
-                val statuses = gameLogic.submitGuess(currentGuess)
-                submittedGuesses = submittedGuesses + Guess(word = currentGuess, statuses = statuses)
-
-                val newKeyStatuses = keyStatuses.toMutableMap()
-                currentGuess.uppercase().forEachIndexed { index, char ->
-                    val currentStatus = newKeyStatuses[char]
-                    val newStatus = statuses[index]
-                    if (currentStatus == null || newStatus == LetterStatus.CORRECT ||
-                        (currentStatus == LetterStatus.INCORRECT && newStatus != LetterStatus.INCORRECT)) {
-                        newKeyStatuses[char] = newStatus
-                    }
-                }
-                keyStatuses = newKeyStatuses
-
-                if (statuses.all { it == LetterStatus.CORRECT }) {
-                    gameStatus = GameStatus.WON
-                    // CAMBIO AQUÍ: Pasamos la longitud de la palabra
-                    scope.launch { statsManager.incrementWins(wordLength) }
-                } else if (submittedGuesses.size >= gameLogic.maxAttempts) {
-                    gameStatus = GameStatus.LOST
-                    // CAMBIO AQUÍ: Pasamos la longitud de la palabra
-                    scope.launch { statsManager.incrementLosses(wordLength) }
-                }
-                currentGuess = ""
-            } else {
-                shakeTrigger++
-            }
-        }
-    }
-
-    val onKeyEvent = { key: String ->
-        if (gameStatus == GameStatus.PLAYING) {
-            when (key) {
-                "ENTER" -> onSubmitGuess()
-                "DELETE" -> { if (currentGuess.isNotEmpty()) currentGuess = currentGuess.dropLast(1) }
-                else -> {
-                    if (currentGuess.length < wordLength) {
-                        currentGuess += key
-                        if (currentGuess.length == wordLength) {
-                            scope.launch {
-                                delay(200L)
-                                onSubmitGuess()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    // El resto de la lógica (settingsManager, statsManager, scopes, etc.)
+    // se moverá al ViewModel cuando sea necesario, simplificando la UI.
 
     Column(
         modifier = Modifier
@@ -151,32 +40,39 @@ fun GameScreen() {
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         WordLengthSelector(
-            selectedLength = wordLength,
-            onLengthSelected = { newLength ->
-                scope.launch {
-                    settingsManager.setWordLength(newLength)
-                }
-            }
+            selectedLength = uiState.wordLength,
+            // Cuando se selecciona una nueva longitud, llamamos al método del ViewModel.
+            onLengthSelected = { gameViewModel.changeWordLength(it) }
         )
 
         GameBoard(
-            wordLength = wordLength,
-            submittedGuesses = submittedGuesses,
-            currentGuess = currentGuess,
-            shakeOffset = shakeController.value
+            wordLength = uiState.wordLength,
+            submittedGuesses = uiState.submittedGuesses,
+            currentGuess = uiState.currentGuess,
+            shakeOffset = 0f // La lógica del shake se puede añadir después en el ViewModel
         )
 
-        GameKeyboard(keyStatuses = keyStatuses, onKeyClick = onKeyEvent)
+        // El teclado ahora solo notifica al ViewModel qué tecla se pulsó.
+        GameKeyboard(
+            keyStatuses = uiState.keyStatuses,
+            onKeyClick = { gameViewModel.onKey(it) }
+        )
     }
 
-    if (gameStatus != GameStatus.PLAYING) {
+    // El diálogo de resultado también se controla con el estado del ViewModel.
+    if (uiState.gameStatus != GameStatus.PLAYING) {
         GameResultDialog(
-            status = gameStatus,
-            secretWord = gameLogic.secretWord,
-            onDismiss = resetGame
+            status = uiState.gameStatus,
+            secretWord = gameViewModel.secretWord,
+            // Al cerrar el diálogo, llamamos al método para reiniciar el juego.
+            onDismiss = { gameViewModel.resetGame() }
         )
     }
 }
+
+
+// --- El resto de composables de la pantalla (WordLengthSelector, LetterBox, etc.) ---
+// --- no necesitan cambios, ya que solo muestran datos. ---
 
 @Composable
 fun WordLengthSelector(

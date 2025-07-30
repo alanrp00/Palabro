@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
     implementation("androidx.navigation:navigation-compose:2.9.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

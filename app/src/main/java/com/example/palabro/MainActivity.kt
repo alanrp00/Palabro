@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val context = LocalContext.current
-            val settingsManager = remember { SettingsManager(context) }
+            val settingsManager = remember { SettingsManager.getInstance(context) }
             val settings by settingsManager.settingsFlow.collectAsState(
                 initial = UserSettings(ThemeStyle.SYSTEM, 5)
             )
