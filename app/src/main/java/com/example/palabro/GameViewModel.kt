@@ -142,7 +142,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update {
                 it.copy(
                     revealedHints = newHints,
-                    showHintDialog = false
+                    showHintDialog = false,
+                    currentGuess = ""
                 )
             }
         } else {
