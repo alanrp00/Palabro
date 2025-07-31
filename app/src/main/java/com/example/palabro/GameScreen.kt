@@ -1,5 +1,7 @@
 package com.example.palabro
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardReturn
 import androidx.compose.material.icons.filled.Backspace
-import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +22,15 @@ import com.example.palabro.ui.theme.LocalGameColors
 @Composable
 fun GameScreen(gameViewModel: GameViewModel) {
     val uiState by gameViewModel.uiState.collectAsState()
+
+    val shakeController = remember { Animatable(0f) }
+
+    LaunchedEffect(uiState.triggerShake) {
+        if (uiState.triggerShake > 0) {
+            shakeController.animateTo(1f, animationSpec = tween(durationMillis = 400))
+            shakeController.snapTo(0f)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -38,7 +48,7 @@ fun GameScreen(gameViewModel: GameViewModel) {
             wordLength = uiState.wordLength,
             submittedGuesses = uiState.submittedGuesses,
             currentGuess = uiState.currentGuess,
-            shakeOffset = 0f,
+            shakeOffset = shakeController.value,
             uiState = uiState
         )
 
@@ -60,7 +70,7 @@ fun GameScreen(gameViewModel: GameViewModel) {
         AlertDialog(
             onDismissRequest = { gameViewModel.onHintDismiss() },
             title = { Text("Pista") },
-            text = { Text("Revelar una letra correcta?") },
+            text = { Text("Se revelará una letra correcta en el tablero.") },
             confirmButton = {
                 TextButton(onClick = { gameViewModel.onHintConfirm() }) {
                     Text("Revelar")
@@ -146,9 +156,7 @@ fun LetterBox(
                     MaterialTheme.colorScheme.onBackground
                 }
                 Text(
-                    // --- INICIO DEL CAMBIO ---
-                    text = letter.normalize().toString(), // ¡Aquí aplicamos la magia!
-                    // --- FIN DEL CAMBIO ---
+                    text = letter.normalize().toString(),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = textColor
@@ -177,8 +185,9 @@ fun GameBoard(
                 else -> Guess(word = "", statuses = null)
             }
 
+            // Aquí se aplica el desplazamiento solo a la fila activa
             val rowOffset = if (i == currentAttemptIndex) {
-                (kotlin.math.sin(shakeOffset * 2 * Math.PI) * 15).toFloat()
+                (kotlin.math.sin(shakeOffset * 8 * Math.PI) * 15).toFloat() // Aumenté la frecuencia para un shake más rápido
             } else 0f
 
             WordRow(
@@ -187,11 +196,12 @@ fun GameBoard(
                 statuses = statuses,
                 isActiveRow = (i == currentAttemptIndex),
                 modifier = Modifier.offset(x = rowOffset.dp),
-                revealedHints = uiState.revealedHints // <-- AÑADE ESTA LÍNEA
+                revealedHints = uiState.revealedHints
             )
         }
     }
 }
+
 
 @Composable
 fun WordRow(
@@ -202,7 +212,6 @@ fun WordRow(
     modifier: Modifier = Modifier,
     revealedHints: Map<Int, Char> = emptyMap()
 ) {
-    // Puntero para saber qué letra de la palabra del usuario (word) toca poner.
     var guessPointer = 0
 
     Row(
@@ -214,32 +223,22 @@ fun WordRow(
             var status: LetterStatus? = null
 
             if (isActiveRow) {
-                // --- INICIO DE LA NUEVA LÓGICA ---
                 if (revealedHints.containsKey(i)) {
-                    // Si la celda actual (i) tiene una pista, la mostramos.
                     letter = revealedHints[i]
-                    status = LetterStatus.CORRECT // La pintamos de verde
+                    status = LetterStatus.CORRECT
                 } else {
-                    // Si no tiene una pista, es una celda para el usuario.
-                    // Usamos el puntero para coger la siguiente letra que ha escrito.
                     letter = word.getOrNull(guessPointer)
                     status = null
-                    // Si hemos puesto una letra, avanzamos el puntero.
                     if (letter != null) {
                         guessPointer++
                     }
                 }
-                // --- FIN DE LA NUEVA LÓGICA ---
             } else {
-                // Para las filas ya enviadas, la lógica no cambia.
                 letter = word.getOrNull(i)
                 status = statuses?.getOrNull(i)
             }
 
-            // --- LÓGICA DEL CURSOR ACTUALIZADA ---
-            // Buscamos la primera celda que no tenga pista. Esa es la siguiente posición libre.
             val nextFreeSlot = (0 until wordLength).firstOrNull { j -> !revealedHints.containsKey(j) } ?: 0
-            // El cursor estará en la primera celda libre que venga después de las letras ya escritas.
             val cursorPosition = (nextFreeSlot until wordLength)
                 .find { j -> !revealedHints.containsKey(j) && j >= guessPointer } ?: guessPointer
 
@@ -255,6 +254,7 @@ fun WordRow(
         }
     }
 }
+
 
 @Composable
 fun KeyboardKey(
