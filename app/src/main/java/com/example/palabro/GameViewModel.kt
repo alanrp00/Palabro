@@ -106,7 +106,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
         } else {
-            // TODO: Shake animation
+            // La palabra no es válida, así que incrementamos el contador para disparar la animación.
+            _uiState.update { it.copy(triggerShake = it.triggerShake + 1) }
         }
     }
 
@@ -163,5 +164,6 @@ data class GameUiState(
     val keyStatuses: Map<Char, LetterStatus> = emptyMap(),
     val gameStatus: GameStatus = GameStatus.PLAYING,
     val showHintDialog: Boolean = false,
-    val revealedHints: Map<Int, Char> = emptyMap()
+    val revealedHints: Map<Int, Char> = emptyMap(),
+    val triggerShake: Int = 0
 )
