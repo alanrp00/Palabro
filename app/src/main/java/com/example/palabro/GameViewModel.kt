@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val settingsManager = SettingsManager.getInstance(application)
+    private val statsManager = StatsManager.getInstance(application)
 
     private lateinit var gameLogic: GameLogic
 
@@ -49,30 +50,23 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun submitGuess() {
-        // --- INICIO DE LA NUEVA LÓGICA ---
-        // 1. Reconstruimos la palabra completa que ve el usuario.
         val fullWordChars = CharArray(gameLogic.wordLength)
         var guessPointer = 0
         for (i in 0 until gameLogic.wordLength) {
             if (uiState.value.revealedHints.containsKey(i)) {
-                // Si hay una pista en esta posición, la usamos.
                 fullWordChars[i] = uiState.value.revealedHints.getValue(i)
             } else {
-                // Si no, usamos la siguiente letra escrita por el usuario.
                 if (guessPointer < uiState.value.currentGuess.length) {
                     fullWordChars[i] = uiState.value.currentGuess[guessPointer]
                     guessPointer++
                 } else {
-                    // Si llegamos aquí, la palabra no está completa, no hacemos nada.
                     return
                 }
             }
         }
         val guess = String(fullWordChars)
-        // --- FIN DE LA NUEVA LÓGICA ---
 
 
-        // 2. El resto de la función usa la palabra completa que acabamos de construir.
         if (gameLogic.isValidWord(guess)) {
             val statuses = gameLogic.submitGuess(guess)
             val newSubmittedGuesses = uiState.value.submittedGuesses + Guess(guess, statuses)
@@ -92,13 +86,23 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 else -> GameStatus.PLAYING
             }
 
+            if (newGameStatus != GameStatus.PLAYING) {
+                viewModelScope.launch {
+                    when (newGameStatus) {
+                        GameStatus.WON -> statsManager.incrementWins(gameLogic.wordLength)
+                        GameStatus.LOST -> statsManager.incrementLosses(gameLogic.wordLength)
+                        else -> {}
+                    }
+                }
+            }
+
             _uiState.update { currentState ->
                 currentState.copy(
                     submittedGuesses = newSubmittedGuesses,
-                    currentGuess = "", // Limpiamos el input del usuario
+                    currentGuess = "",
                     keyStatuses = newKeyStatuses,
                     gameStatus = newGameStatus,
-                    revealedHints = emptyMap() // Limpiamos las pistas para la siguiente fila
+                    revealedHints = emptyMap()
                 )
             }
         } else {
@@ -130,12 +134,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onHintConfirm() {
-        // Pasamos el mapa de pistas actual a la lógica
         val hint = gameLogic.getHint(uiState.value.currentGuess, uiState.value.revealedHints)
 
         if (hint != null) {
             val (index, letter) = hint
-            // Actualizamos el mapa de pistas, añadiendo la nueva
             val newHints = uiState.value.revealedHints + (index to letter)
             _uiState.update {
                 it.copy(
@@ -160,5 +162,5 @@ data class GameUiState(
     val keyStatuses: Map<Char, LetterStatus> = emptyMap(),
     val gameStatus: GameStatus = GameStatus.PLAYING,
     val showHintDialog: Boolean = false,
-    val revealedHints: Map<Int, Char> = emptyMap() // <-- AÑADE ESTA LÍNEA
+    val revealedHints: Map<Int, Char> = emptyMap()
 )

@@ -28,14 +28,12 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun StatsScreen() {
     val context = LocalContext.current
-    val statsManager = remember { StatsManager(context) }
+    val statsManager = remember { StatsManager.getInstance(context) }
 
-    // CAMBIO: Estado para saber qué pestaña está seleccionada
     var selectedTabIndex by remember { mutableStateOf(0) }
     val wordLengths = listOf(5, 6, 7)
     val selectedLength = wordLengths[selectedTabIndex]
 
-    // CAMBIO: Obtenemos las estadísticas para la longitud seleccionada
     val stats by statsManager.getStatsFlow(selectedLength).collectAsState(
         initial = GameStats(0, 0, 0, 0)
     )
@@ -51,7 +49,6 @@ fun StatsScreen() {
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // CAMBIO: Menú de pestañas
         TabRow(selectedTabIndex = selectedTabIndex) {
             wordLengths.forEachIndexed { index, length ->
                 Tab(
@@ -62,7 +59,6 @@ fun StatsScreen() {
             }
         }
 
-        // El contenido de las estadísticas ahora se muestra dentro de un padding
         Column(
             modifier = Modifier
                 .fillMaxSize()

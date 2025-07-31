@@ -19,10 +19,19 @@ data class GameStats(
     val maxStreak: Int
 )
 
-class StatsManager(private val context: Context) {
+class StatsManager private constructor(private val context: Context) {
 
-    // CAMBIO: Las funciones ahora necesitan la longitud de la palabra
-    // para saber qué estadísticas leer o modificar.
+    companion object {
+        @Volatile
+        private var INSTANCE: StatsManager? = null
+
+        fun getInstance(context: Context): StatsManager {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: StatsManager(context.applicationContext).also { INSTANCE = it }
+            }
+        }
+    }
+
     fun getStatsFlow(length: Int): Flow<GameStats> {
         return context.dataStore.data.map { preferences ->
             val gamesPlayed = preferences[intPreferencesKey("games_played_$length")] ?: 0
