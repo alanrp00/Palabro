@@ -4,17 +4,9 @@ import android.content.Context
 import android.util.Log
 import kotlin.random.Random
 
-private fun String.normalize(): String {
-    return this.replace('Á', 'A')
-        .replace('É', 'E')
-        .replace('Í', 'I')
-        .replace('Ó', 'O')
-        .replace('Ú', 'U')
-}
-
 class GameLogic(private val context: Context, val wordLength: Int) {
 
-    private val tag = "GameLogic" // Convención de Kotlin: minúsculas para tags privados
+    private val tag = "GameLogic"
 
     private var wordList: List<String> = emptyList()
     private var normalizedWordSet: Set<String> = emptySet()
@@ -46,7 +38,11 @@ class GameLogic(private val context: Context, val wordLength: Int) {
     }
 
     fun isValidWord(word: String): Boolean {
-        return normalizedWordSet.contains(word.uppercase())
+        // Añadimos un log para depurar qué se está validando exactamente.
+        val normalizedWord = word.uppercase().normalize()
+        val isValid = normalizedWordSet.contains(normalizedWord)
+        Log.d(tag, "Validando: '$normalizedWord'. Es válido: $isValid")
+        return isValid
     }
 
     fun startNewGame() {
@@ -57,42 +53,50 @@ class GameLogic(private val context: Context, val wordLength: Int) {
         }
     }
 
+    // --- FUNCIÓN submitGuess CORREGIDA ---
     fun submitGuess(guess: String): List<LetterStatus> {
         val upperGuess = guess.uppercase()
+        // Guardamos siempre el intento del usuario tal cual, sin normalizar.
         guesses.add(upperGuess)
 
-        val normalizedSecretWord = secretWord.normalize()
+        val normalizedSecret = secretWord.normalize()
+        val normalizedGuess = upperGuess.normalize()
 
-        val result = MutableList(normalizedSecretWord.length) { LetterStatus.INCORRECT }
-        val secretWordLetterCounts = normalizedSecretWord.groupingBy { it }.eachCount().toMutableMap()
+        val result = MutableList(wordLength) { LetterStatus.INCORRECT }
+        val secretLetterCounts = normalizedSecret.groupingBy { it }.eachCount().toMutableMap()
 
-        upperGuess.forEachIndexed { index, char ->
-            if (index < normalizedSecretWord.length && char == normalizedSecretWord[index]) {
-                result[index] = LetterStatus.CORRECT
-                secretWordLetterCounts[char] = secretWordLetterCounts.getOrDefault(char, 0) - 1
+        // 1. Comprobamos las letras CORRECTAS (posición y letra coinciden)
+        for (i in 0 until wordLength) {
+            if (normalizedGuess[i] == normalizedSecret[i]) {
+                result[i] = LetterStatus.CORRECT
+                secretLetterCounts[normalizedGuess[i]] = secretLetterCounts.getOrDefault(normalizedGuess[i], 0) - 1
             }
         }
 
-        upperGuess.forEachIndexed { index, char ->
-            if (result[index] == LetterStatus.INCORRECT) {
-                if (secretWordLetterCounts.getOrDefault(char, 0) > 0) {
-                    result[index] = LetterStatus.WRONG_POSITION
-                    secretWordLetterCounts[char] = secretWordLetterCounts.getOrDefault(char, 0) - 1
+        // 2. Comprobamos las letras en POSICIÓN INCORRECTA
+        for (i in 0 until wordLength) {
+            if (result[i] == LetterStatus.INCORRECT) { // Solo si no la hemos marcado ya como correcta
+                if (secretLetterCounts.getOrDefault(normalizedGuess[i], 0) > 0) {
+                    result[i] = LetterStatus.WRONG_POSITION
+                    secretLetterCounts[normalizedGuess[i]] = secretLetterCounts.getOrDefault(normalizedGuess[i], 0) - 1
                 }
             }
         }
         return result
     }
+    // --- FIN DE LA CORRECCIÓN ---
+
 
     fun getHint(currentGuess: String, revealedHints: Map<Int, Char>): Pair<Int, Char>? {
         val unguessedIndices = secretWord.indices.filter { index ->
             val notGuessedCorrectly = guesses.all { guess ->
-                guess.getOrNull(index) != secretWord[index]
+                // Comparamos la letra de la palabra secreta con la letra (normalizada) del intento
+                secretWord[index].normalize() != guess.normalize().getOrNull(index)
             }
-            val notInCurrentGuess = currentGuess.getOrNull(index) != secretWord[index]
-            val notAlreadyRevealed = !revealedHints.containsKey(index) // <-- AÑADE ESTA LÍNEA
+            val notInCurrentGuess = currentGuess.normalize().getOrNull(index) != secretWord[index].normalize()
+            val notAlreadyRevealed = !revealedHints.containsKey(index)
 
-            notGuessedCorrectly && notInCurrentGuess && notAlreadyRevealed // <-- Y MODIFICA AQUÍ
+            notGuessedCorrectly && notInCurrentGuess && notAlreadyRevealed
         }
 
         if (unguessedIndices.isEmpty()) {
@@ -102,5 +106,4 @@ class GameLogic(private val context: Context, val wordLength: Int) {
         val randomIndex = unguessedIndices.random()
         return Pair(randomIndex, secretWord[randomIndex])
     }
-
 }

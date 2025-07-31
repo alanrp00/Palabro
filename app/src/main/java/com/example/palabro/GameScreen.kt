@@ -146,7 +146,9 @@ fun LetterBox(
                     MaterialTheme.colorScheme.onBackground
                 }
                 Text(
-                    text = letter.toString(),
+                    // --- INICIO DEL CAMBIO ---
+                    text = letter.normalize().toString(), // ¡Aquí aplicamos la magia!
+                    // --- FIN DEL CAMBIO ---
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = textColor
