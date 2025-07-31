@@ -27,7 +27,7 @@ fun GameScreen(gameViewModel: GameViewModel) {
 
     LaunchedEffect(uiState.triggerShake) {
         if (uiState.triggerShake > 0) {
-            shakeController.animateTo(1f, animationSpec = tween(durationMillis = 400))
+            shakeController.animateTo(1f, animationSpec = tween(durationMillis = 800))
             shakeController.snapTo(0f)
         }
     }
@@ -187,7 +187,7 @@ fun GameBoard(
 
             // Aquí se aplica el desplazamiento solo a la fila activa
             val rowOffset = if (i == currentAttemptIndex) {
-                (kotlin.math.sin(shakeOffset * 8 * Math.PI) * 15).toFloat() // Aumenté la frecuencia para un shake más rápido
+                (kotlin.math.sin(shakeOffset * 4 * Math.PI) * 3).toFloat() // Aumenté la frecuencia para un shake más rápido
             } else 0f
 
             WordRow(
