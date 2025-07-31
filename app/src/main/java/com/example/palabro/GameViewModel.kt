@@ -69,7 +69,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         if (gameLogic.isValidWord(guess)) {
             val statuses = gameLogic.submitGuess(guess)
-            val newSubmittedGuesses = uiState.value.submittedGuesses + Guess(guess, statuses)
+            // Creamos el nuevo intento, marcándolo como NO revelado inicialmente.
+            val newSubmittedGuesses = uiState.value.submittedGuesses + Guess(guess, statuses, isRevealed = false)
 
             val newKeyStatuses = uiState.value.keyStatuses.toMutableMap()
             guess.uppercase().forEachIndexed { index, char ->
@@ -96,9 +97,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
+            // Marcamos el último intento como revelado para disparar la animación
+            val finalSubmittedGuesses = newSubmittedGuesses.mapIndexed { index, oldGuess ->
+                if (index == newSubmittedGuesses.lastIndex) oldGuess.copy(isRevealed = true) else oldGuess
+            }
+
             _uiState.update { currentState ->
                 currentState.copy(
-                    submittedGuesses = newSubmittedGuesses,
+                    submittedGuesses = finalSubmittedGuesses, // Usamos la nueva lista
                     currentGuess = "",
                     keyStatuses = newKeyStatuses,
                     gameStatus = newGameStatus,
@@ -106,7 +112,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
         } else {
-            // La palabra no es válida, así que incrementamos el contador para disparar la animación.
             _uiState.update { it.copy(triggerShake = it.triggerShake + 1) }
         }
     }
