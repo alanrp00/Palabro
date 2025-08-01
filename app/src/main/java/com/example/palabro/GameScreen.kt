@@ -94,7 +94,6 @@ fun GameScreen(gameViewModel: GameViewModel) {
 }
 
 
-// --- INICIO DE LA VERSIÓN FINAL DE LETTERBOX ---
 @Composable
 fun LetterBox(
     letter: Char?,
@@ -107,11 +106,22 @@ fun LetterBox(
     val gameColors = LocalGameColors.current
     val rotation = remember { Animatable(0f) }
 
+    // Este LaunchedEffect ejecuta la animación hacia adelante
     LaunchedEffect(isRevealed) {
         if (isRevealed) {
             rotation.animateTo(180f, animationSpec = tween(durationMillis = 800))
         }
     }
+
+    // --- INICIO DE LA CORRECCIÓN ---
+    // Este LaunchedEffect resetea la animación si la casilla se vacía
+    LaunchedEffect(letter, status) {
+        if (letter == null && status == null) {
+            rotation.snapTo(0f)
+        }
+    }
+    // --- FIN DE LA CORRECCIÓN ---
+
 
     val revealedColor = when (status) {
         LetterStatus.CORRECT -> gameColors.correct
@@ -128,10 +138,8 @@ fun LetterBox(
     }
 
     val surfaceColor = if (isActiveRow && status != null) {
-        // Para la pista en la fila activa, el color es inmediato
         revealedColor
     } else {
-        // Para las filas enviadas, el color depende del giro
         if (rotation.value < 90f) MaterialTheme.colorScheme.background else revealedColor
     }
 
@@ -150,20 +158,17 @@ fun LetterBox(
             contentAlignment = Alignment.Center
         ) {
             if (letter != null) {
-                // --- INICIO DE LA CORRECCIÓN ---
                 Text(
                     text = letter.normalize().toString(),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    // El color del texto también depende del giro para estar sincronizado
-                    color = if (rotation.value < 90f && status == null) MaterialTheme.colorScheme.onBackground else Color.White,
+                    color = if (status != null) Color.White else MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.graphicsLayer {
                         if (rotation.value >= 90f) {
                             rotationY = 180f
                         }
                     }
                 )
-                // --- FIN DE LA CORRECCIÓN ---
             }
         }
     }
@@ -234,8 +239,6 @@ fun WordRow(
         }
     }
 }
-// --- FIN DE LAS CORRECCIONES ---
-
 
 @Composable
 fun WordLengthSelector(
@@ -284,9 +287,7 @@ fun GameBoard(
 
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
-        // --- INICIO DEL CAMBIO ---
-        modifier = Modifier.fillMaxWidth(0.9f) // El tablero ocupará el 90% del ancho
-        // --- FIN DEL CAMBIO ---
+        modifier = Modifier.fillMaxWidth(0.9f)
     ) {
         for (i in 0 until maxAttempts) {
             val guess = when {
@@ -318,21 +319,25 @@ fun KeyboardKey(
     onKeyClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val gameColors = LocalGameColors.current
-    val color = when (status) {
-        LetterStatus.CORRECT -> gameColors.correct
-        LetterStatus.WRONG_POSITION -> gameColors.wrongPosition
-        LetterStatus.INCORRECT -> gameColors.incorrect
-        null -> MaterialTheme.colorScheme.surface
+    // --- INICIO DE LA LÓGICA DE COLOR ---
+    // El color de la letra ahora depende del estado (status)
+    val contentColor = when (status) {
+        LetterStatus.CORRECT -> LocalGameColors.current.correct
+        LetterStatus.WRONG_POSITION -> LocalGameColors.current.wrongPosition
+        LetterStatus.INCORRECT -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) // Gris atenuado
+        null -> MaterialTheme.colorScheme.onSurface // Color por defecto
     }
-    val contentColor = if (status != null) Color.White else MaterialTheme.colorScheme.onSurface
+
+    // El fondo de la tecla ahora es sutil
+    val backgroundColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+    // --- FIN DE LA LÓGICA DE COLOR ---
 
     Surface(
         modifier = modifier
             .height(56.dp)
             .clickable { onKeyClick(key) },
-        color = color,
-        shape = RoundedCornerShape(4.dp)
+        color = backgroundColor, // Usamos el nuevo fondo sutil
+        shape = RoundedCornerShape(8.dp) // Un poco más redondeado para ir con las casillas
     ) {
         Box(contentAlignment = Alignment.Center) {
             when (key) {
@@ -342,7 +347,7 @@ fun KeyboardKey(
                     text = key,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = contentColor
+                    color = contentColor // El color del texto es ahora dinámico
                 )
             }
         }
