@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.palabro.ui.theme.LocalGameColors
+import com.example.palabro.ui.theme.LocalKeyboardColors
 import kotlinx.coroutines.delay
 
 @Composable
@@ -266,12 +267,17 @@ fun KeyboardKey(
     onKeyClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // --- INICIO DE LA CORRECCIÓN ---
+    // Usamos la nueva paleta de colores específica para el teclado
+    val keyboardColors = LocalKeyboardColors.current
     val contentColor = when (status) {
-        LetterStatus.CORRECT -> LocalGameColors.current.correct
-        LetterStatus.WRONG_POSITION -> LocalGameColors.current.wrongPosition
+        LetterStatus.CORRECT -> keyboardColors.correct
+        LetterStatus.WRONG_POSITION -> keyboardColors.wrongPosition
         LetterStatus.INCORRECT -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
         null -> MaterialTheme.colorScheme.onSurface
     }
+    // --- FIN DE LA CORRECCIÓN ---
+
     val backgroundColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
     Surface(
         modifier = modifier
