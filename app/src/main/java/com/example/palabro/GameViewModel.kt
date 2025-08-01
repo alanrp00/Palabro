@@ -3,6 +3,7 @@ package com.example.palabro
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,19 +60,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 if (guessPointer < uiState.value.currentGuess.length) {
                     fullWordChars[i] = uiState.value.currentGuess[guessPointer]
                     guessPointer++
-                } else {
-                    return
-                }
+                } else { return }
             }
         }
         val guess = String(fullWordChars)
 
-
         if (gameLogic.isValidWord(guess)) {
             val statuses = gameLogic.submitGuess(guess)
-            // Creamos el nuevo intento, marcándolo como NO revelado inicialmente.
             val newSubmittedGuesses = uiState.value.submittedGuesses + Guess(guess, statuses, isRevealed = false)
-
             val newKeyStatuses = uiState.value.keyStatuses.toMutableMap()
             guess.uppercase().forEachIndexed { index, char ->
                 val currentStatus = newKeyStatuses[char]
@@ -81,36 +77,49 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
-            val newGameStatus = when {
-                statuses.all { it == LetterStatus.CORRECT } -> GameStatus.WON
-                newSubmittedGuesses.size >= gameLogic.maxAttempts -> GameStatus.LOST
-                else -> GameStatus.PLAYING
-            }
+            // --- INICIO DE LA CORRECCIÓN ---
 
-            if (newGameStatus != GameStatus.PLAYING) {
-                viewModelScope.launch {
-                    when (newGameStatus) {
-                        GameStatus.WON -> statsManager.incrementWins(gameLogic.wordLength)
-                        GameStatus.LOST -> statsManager.incrementLosses(gameLogic.wordLength)
-                        else -> {}
-                    }
-                }
-            }
+            val isWin = statuses.all { it == LetterStatus.CORRECT }
+            val isLoss = newSubmittedGuesses.size >= gameLogic.maxAttempts
 
-            // Marcamos el último intento como revelado para disparar la animación
+            // 1. Actualizamos el tablero inmediatamente para que la animación de volteo comience.
+            //    Mantenemos el estado como PLAYING por ahora.
             val finalSubmittedGuesses = newSubmittedGuesses.mapIndexed { index, oldGuess ->
                 if (index == newSubmittedGuesses.lastIndex) oldGuess.copy(isRevealed = true) else oldGuess
             }
-
             _uiState.update { currentState ->
                 currentState.copy(
-                    submittedGuesses = finalSubmittedGuesses, // Usamos la nueva lista
+                    submittedGuesses = finalSubmittedGuesses,
                     currentGuess = "",
                     keyStatuses = newKeyStatuses,
-                    gameStatus = newGameStatus,
                     revealedHints = emptyMap()
                 )
             }
+
+            // 2. Si el juego ha terminado (victoria o derrota), lanzamos una corrutina con retraso.
+            if (isWin || isLoss) {
+                viewModelScope.launch {
+                    // Calculamos la duración total de la animación de volteo
+                    val animationDuration = (gameLogic.wordLength * 300L) + 600L // 300ms por letra + un extra
+
+                    // Esperamos a que la animación termine
+                    delay(animationDuration)
+
+                    // Actualizamos las estadísticas
+                    if (isWin) {
+                        statsManager.incrementWins(gameLogic.wordLength)
+                    } else {
+                        statsManager.incrementLosses(gameLogic.wordLength)
+                    }
+
+                    // Finalmente, actualizamos el estado para mostrar el diálogo de resultado
+                    _uiState.update {
+                        it.copy(gameStatus = if (isWin) GameStatus.WON else GameStatus.LOST)
+                    }
+                }
+            }
+            // --- FIN DE LA CORRECCIÓN ---
+
         } else {
             _uiState.update { it.copy(triggerShake = it.triggerShake + 1) }
         }
