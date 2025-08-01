@@ -1,31 +1,25 @@
 package com.example.palabro
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -48,9 +42,8 @@ fun AppNavigation() {
     val scope = rememberCoroutineScope()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
-    // Creamos la instancia del ViewModel aquí, para que pueda ser compartida.
     val gameViewModel: GameViewModel = viewModel()
+    val uiState by gameViewModel.uiState.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -65,20 +58,44 @@ fun AppNavigation() {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Palabro") },
+                    title = {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (currentRoute == AppRoutes.GAME) {
+                                WordLengthSelector(
+                                    selectedLength = uiState.wordLength,
+                                    onLengthSelected = { gameViewModel.changeWordLength(it) }
+                                )
+                            } else {
+                                val titleText = when (currentRoute) {
+                                    AppRoutes.SETTINGS -> "Ajustes"
+                                    AppRoutes.STATS -> "Estadísticas"
+                                    else -> ""
+                                }
+                                Text(titleText, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menú")
                         }
                     },
-                    // Añadimos la sección de "acciones" a la barra.
                     actions = {
-                        // Solo mostramos el botón de pista si estamos en la pantalla del juego.
+                        // --- INICIO DE LA CORRECCIÓN ---
+                        // El botón de la pista está aquí, y su visibilidad depende de la ruta.
                         if (currentRoute == AppRoutes.GAME) {
                             IconButton(onClick = { gameViewModel.onHintPressed() }) {
                                 Icon(Icons.Default.Lightbulb, contentDescription = "Pista")
                             }
+                        } else {
+                            // Cuando no estamos en el juego, dejamos un espacio en blanco
+                            // del mismo tamaño que un icono para que el título se centre bien.
+                            Spacer(Modifier.width(48.dp))
                         }
+                        // --- FIN DE LA CORRECCIÓN ---
                     }
                 )
             }
@@ -88,7 +105,6 @@ fun AppNavigation() {
                 navController = navController,
                 startDestination = AppRoutes.GAME
             ) {
-                // Le pasamos la instancia del ViewModel a la pantalla del juego.
                 composable(AppRoutes.GAME) {
                     GameScreen(gameViewModel)
                 }
@@ -103,6 +119,49 @@ fun AppNavigation() {
     }
 }
 
+
+// --- VERSIÓN COMPACTA DEL WORDLENGTHSELECTOR RESTAURADA ---
+@Composable
+fun WordLengthSelector(
+    selectedLength: Int,
+    onLengthSelected: (Int) -> Unit
+) {
+    val options = listOf(5, 6, 7)
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        options.forEachIndexed { index, length ->
+            val isSelected = selectedLength == length
+            val contentColor by androidx.compose.animation.animateColorAsState(
+                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                animationSpec = tween(durationMillis = 300),
+                label = "ContentColorAnimation"
+            )
+
+            Text(
+                text = "$length Letras",
+                color = contentColor,
+                fontSize = 14.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                modifier = Modifier
+                    .clickable { onLengthSelected(length) }
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            )
+
+            if (index < options.size - 1) {
+                Divider(
+                    modifier = Modifier
+                        .height(16.dp)
+                        .width(1.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                )
+            }
+        }
+    }
+}
+
+
 @Composable
 fun AppDrawerContent(
     navController: NavController,
@@ -111,7 +170,6 @@ fun AppDrawerContent(
 ) {
     ModalDrawerSheet {
         Spacer(Modifier.height(12.dp))
-
         val navigateToScreen: (String) -> Unit = { route ->
             navController.navigate(route) {
                 popUpTo(navController.graph.startDestinationId)
@@ -119,7 +177,6 @@ fun AppDrawerContent(
             }
             closeDrawer()
         }
-
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Home, contentDescription = null) },
             label = { Text("Jugar") },
