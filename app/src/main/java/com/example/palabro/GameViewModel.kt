@@ -170,6 +170,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun onHintDismiss() {
         _uiState.update { it.copy(showHintDialog = false) }
     }
+
+    fun onShakeAnimationCompleted() {
+        _uiState.update { it.copy(triggerShake = 0) }
+    }
 }
 
 data class GameUiState(

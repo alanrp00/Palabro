@@ -32,6 +32,10 @@ fun GameScreen(gameViewModel: GameViewModel) {
         if (uiState.triggerShake > 0) {
             shakeController.animateTo(1f, animationSpec = tween(durationMillis = 600))
             shakeController.snapTo(0f)
+            // --- INICIO DE LA CORRECCIÓN ---
+            // Le decimos al ViewModel que la animación ya se ha completado.
+            gameViewModel.onShakeAnimationCompleted()
+            // --- FIN DE LA CORRECCIÓN ---
         }
     }
 
