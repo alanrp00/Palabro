@@ -3,6 +3,7 @@ package com.example.palabro
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -245,29 +246,40 @@ fun WordLengthSelector(
     selectedLength: Int,
     onLengthSelected: (Int) -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+    val options = listOf(5, 6, 7)
+    val cornerRadius = 24.dp // Definimos un radio de esquina más sutil
+
+    // El Surface exterior crea el fondo y el borde del control
+    Surface(
+        shape = RoundedCornerShape(cornerRadius), // Usamos el nuevo radio
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
     ) {
-        listOf(5, 6, 7).forEach { length ->
-            val isSelected = selectedLength == length
-            OutlinedButton(
-                onClick = { onLengthSelected(length) },
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.onBackground
-                ),
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                ),
-                modifier = Modifier.padding(horizontal = 4.dp)
-            ) {
-                Text(text = "$length Letras")
+        Row {
+            options.forEach { length ->
+                val isSelected = selectedLength == length
+
+                val backgroundColor by androidx.compose.animation.animateColorAsState(
+                    targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "BackgroundColorAnimation"
+                )
+
+                val contentColor by androidx.compose.animation.animateColorAsState(
+                    targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "ContentColorAnimation"
+                )
+
+                // Usamos un Box para que el click ocupe todo el espacio
+                Box(
+                    modifier = Modifier
+                        .background(backgroundColor, shape = RoundedCornerShape(cornerRadius))
+                        .clickable { onLengthSelected(length) }
+                        .padding(horizontal = 24.dp, vertical = 10.dp)
+                ) {
+                    Text(text = "$length Letras", color = contentColor)
+                }
             }
         }
     }

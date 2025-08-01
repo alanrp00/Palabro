@@ -139,17 +139,27 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(showHintDialog = true) }
     }
 
+    // Dentro de la clase GameViewModel
+
     fun onHintConfirm() {
         val hint = gameLogic.getHint(uiState.value.currentGuess, uiState.value.revealedHints)
 
         if (hint != null) {
             val (index, letter) = hint
             val newHints = uiState.value.revealedHints + (index to letter)
+
+            // --- INICIO DE LA CORRECCIÓN ---
+            // Actualizamos también el estado de la tecla en el teclado
+            val newKeyStatuses = uiState.value.keyStatuses.toMutableMap()
+            newKeyStatuses[letter] = LetterStatus.CORRECT
+            // --- FIN DE LA CORRECCIÓN ---
+
             _uiState.update {
                 it.copy(
                     revealedHints = newHints,
                     showHintDialog = false,
-                    currentGuess = ""
+                    currentGuess = "",
+                    keyStatuses = newKeyStatuses // Usamos el nuevo mapa de estados de teclas
                 )
             }
         } else {
