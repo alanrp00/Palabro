@@ -195,7 +195,7 @@ fun WordRow(
 
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         for (i in 0 until wordLength) {
             val letter: Char?
@@ -282,7 +282,12 @@ fun GameBoard(
     val maxAttempts = 6
     val currentAttemptIndex = submittedGuesses.size
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        // --- INICIO DEL CAMBIO ---
+        modifier = Modifier.fillMaxWidth(0.9f) // El tablero ocupará el 90% del ancho
+        // --- FIN DEL CAMBIO ---
+    ) {
         for (i in 0 until maxAttempts) {
             val guess = when {
                 i < currentAttemptIndex -> submittedGuesses[i]
