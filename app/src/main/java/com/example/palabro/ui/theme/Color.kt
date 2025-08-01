@@ -2,11 +2,17 @@ package com.example.palabro.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Estructura para los colores específicos del juego
+// --- Colores para las casillas del tablero ---
 data class GameColors(
     val correct: Color,
     val wrongPosition: Color,
     val incorrect: Color
+)
+
+// --- Colores para el TEXTO de las teclas ---
+data class KeyboardColors(
+    val correct: Color,
+    val wrongPosition: Color
 )
 
 // --- TEMA CLARO ---
@@ -21,6 +27,11 @@ val LightGameColors = GameColors(
     wrongPosition = Color(0xFFC9B458),
     incorrect = Color(0xFF787C7E)
 )
+val LightKeyboardColors = KeyboardColors(
+    correct = Color(0xFF6AAA64),
+    wrongPosition = Color(0xFFC9B458)
+)
+
 
 // --- TEMA OSCURO ---
 val DarkPrimary = Color(0xFF3DDC84)
@@ -32,57 +43,78 @@ val DarkOnSurface = Color.White
 val DarkGameColors = GameColors(
     correct = Color(0xFF538D4E),
     wrongPosition = Color(0xFFB59F3B),
-    incorrect = Color(0xFF3A3A3C)
+    incorrect = Color(0xFF55595b)
+)
+val DarkKeyboardColors = KeyboardColors(
+    correct = Color(0xFF538D4E),
+    wrongPosition = Color(0xFFB59F3B)
 )
 
-// --- TEMA DRACULA (ACTUALIZADO) ---
-val DraculaPrimary = Color(0xFFBD93F9) // Purple
-val DraculaBackground = Color(0xFF282A36) // Background
-val DraculaSurface = Color(0xFF44475A) // Current Line
-val DraculaOnPrimary = Color(0xFFF8F8F2) // Foreground
+// --- TEMA DRACULA ---
+val DraculaPrimary = Color(0xFFBD93F9)      // Purple
+val DraculaBackground = Color(0xFF282A36)  // Background
+val DraculaSurface = Color(0xFF44475A)      // Current Line
+val DraculaOnPrimary = Color(0xFFF8F8F2)    // Foreground
 val DraculaOnBackground = Color(0xFFF8F8F2) // Foreground
-val DraculaOnSurface = Color(0xFFF8F8F2) // Foreground
+val DraculaOnSurface = Color(0xFFF8F8F2)    // Foreground
 val DraculaGameColors = GameColors(
-    correct = Color(0xFF50FA7B), // Green
-    wrongPosition = Color(0xFFE1E986), // Yellow
-    incorrect = Color(0xFF6272A4) // Comment
+    correct = Color(0xff44d368),       // Green
+    wrongPosition = Color(0xffd1da62),   // Yellow
+    incorrect = Color(0xFF6272A4)      // Comment
+)
+val DraculaKeyboardColors = KeyboardColors(
+    correct = Color(0xFF50FA7B),       // Green
+    wrongPosition = Color(0xffd1da62)    // Yellow
 )
 
-// --- TEMA HACKER / TERMINAL ---
-val HackerPrimary = Color(0xFF39FF14)
-val HackerBackground = Color(0xFF000000)
-val HackerSurface = Color(0xFF1C1C1C)
-val HackerOnPrimary = Color.Black
-val HackerOnBackground = Color(0xFF39FF14)
-val HackerOnSurface = Color(0xFF39FF14)
-val HackerGameColors = GameColors(
-    correct = Color(0xFF39FF14),
-    wrongPosition = Color(0xFFb8860b),
-    incorrect = Color(0xFF333333)
-)
-
-// --- TEMA PASTEL ---
-val PastelPrimary = Color(0xFFe3a3da) // color1
-val PastelBackground = Color(0xFFd6eae6) // color5
-val PastelSurface = Color(0xFFe7e7bc) // color4
-val PastelOnPrimary = Color(0xFFFFFFFF)
-val PastelOnBackground = Color(0xFF5D5C61) // Un gris oscuro para el texto
-val PastelOnSurface = Color(0xFF5D5C61) // Un gris oscuro para el texto
+// --- TEMA PASTEL (CORREGIDO) ---
+val PastelPrimary = Color(0xFFB39DDB) // Lavanda suave
+val PastelBackground = Color(0xFFF5F5F5) // Un blanco roto muy claro
+val PastelSurface = Color(0xFFE0F2F1) // Menta muy pálido
+val PastelOnPrimary = Color.White
+val PastelOnBackground = Color(0xFF546E7A) // Gris azulado oscuro
+val PastelOnSurface = Color(0xFF546E7A) // Gris azulado oscuro
 val PastelGameColors = GameColors(
-    correct = Color(0xFF82E182), // Un verde pastel que combina
-    wrongPosition = Color(0xFFdfcaa2), // color3
-    incorrect = Color(0xFFe2abb3) // color2
+    correct = Color(0xFFC5E1A5),       // Verde lima pastel
+    wrongPosition = Color(0xfff4db8f),   // Amarillo pastel
+    incorrect = Color(0xFFB0BEC5)      // Gris azulado claro
+)
+val PastelKeyboardColors = KeyboardColors(
+    correct = Color(0xFF558B2F),       // Verde oscuro para contraste
+    wrongPosition = Color(0xFFF9A825)      // Amarillo oscuro para contraste
 )
 
-// --- NUEVO TEMA: RETRO / VINTAGE ---
-val RetroPrimary = Color(0xFF008080) // Teal
-val RetroBackground = Color(0xFFF5EFE6) // Crema / Papel antiguo
-val RetroSurface = Color(0xFFE8DFD1) // Beige claro
+// --- TEMA SOLARIZED DARK ---
+val SolarizedPrimary = Color(0xFF2aa198)
+val SolarizedBackground = Color(0xFF002b36)
+val SolarizedSurface = Color(0xFF073642)
+val SolarizedOnPrimary = Color(0xFFfdf6e3)
+val SolarizedOnBackground = Color(0xFF839496)
+val SolarizedOnSurface = Color(0xFF93a1a1)
+val SolarizedGameColors = GameColors(
+    correct = Color(0xFF859900),
+    wrongPosition = Color(0xFFb58900),
+    incorrect = Color(0xFF586e75)
+)
+val SolarizedKeyboardColors = KeyboardColors(
+    correct = Color(0xFF859900),
+    wrongPosition = Color(0xFFb58900)
+)
+
+
+// --- TEMA RETRO ---
+val RetroPrimary = Color(0xFF008080)
+val RetroBackground = Color(0xFFF5EFE6)
+val RetroSurface = Color(0xFFE8DFD1)
 val RetroOnPrimary = Color.White
-val RetroOnBackground = Color(0xFF4E463F) // Marrón oscuro para texto
-val RetroOnSurface = Color(0xFF4E463F) // Marrón oscuro para texto
+val RetroOnBackground = Color(0xFF4E463F)
+val RetroOnSurface = Color(0xFF4E463F)
 val RetroGameColors = GameColors(
-    correct = Color(0xFF6B8E23), // Verde Oliva
-    wrongPosition = Color(0xFFDAA520), // Amarillo Mostaza / Dorado
-    incorrect = Color(0xFF8A7F7C) // Gris pardo
+    correct = Color(0xFF6B8E23),
+    wrongPosition = Color(0xFFDAA520),
+    incorrect = Color(0xFF8A7F7C)
+)
+val RetroKeyboardColors = KeyboardColors(
+    correct = Color(0xFF6B8E23),
+    wrongPosition = Color(0xFFDAA520)
 )

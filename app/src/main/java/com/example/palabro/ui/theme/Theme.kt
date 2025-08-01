@@ -15,11 +15,11 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 enum class ThemeStyle {
-    SYSTEM, LIGHT, DARK, DRACULA, HACKER, PASTEL, RETRO
+    SYSTEM, LIGHT, DARK, DRACULA, SOLARIZED, PASTEL, RETRO
 }
 
-// Creamos un "proveedor" de CompositionLocal para nuestros colores de juego
 val LocalGameColors = staticCompositionLocalOf { LightGameColors }
+val LocalKeyboardColors = staticCompositionLocalOf { LightKeyboardColors } // <-- NUEVO
 
 private val DarkColorScheme = darkColorScheme(
     primary = DarkPrimary,
@@ -29,7 +29,7 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = DarkOnBackground,
     onSurface = DarkOnSurface,
 )
-
+// ... (resto de esquemas de color no cambian)
 private val LightColorScheme = lightColorScheme(
     primary = LightPrimary,
     background = LightBackground,
@@ -46,15 +46,6 @@ private val DraculaColorScheme = darkColorScheme(
     onPrimary = DraculaOnPrimary,
     onBackground = DraculaOnBackground,
     onSurface = DraculaOnSurface,
-)
-
-private val HackerColorScheme = darkColorScheme(
-    primary = HackerPrimary,
-    background = HackerBackground,
-    surface = HackerSurface,
-    onPrimary = HackerOnPrimary,
-    onBackground = HackerOnBackground,
-    onSurface = HackerOnSurface,
 )
 
 private val PastelColorScheme = lightColorScheme(
@@ -75,6 +66,14 @@ private val RetroColorScheme = lightColorScheme(
     onSurface = RetroOnSurface,
 )
 
+private val SolarizedColorScheme = darkColorScheme(
+    primary = SolarizedPrimary,
+    background = SolarizedBackground,
+    surface = SolarizedSurface,
+    onPrimary = SolarizedOnPrimary,
+    onBackground = SolarizedOnBackground,
+    onSurface = SolarizedOnSurface,
+)
 
 @Composable
 fun PalabroTheme(
@@ -84,31 +83,37 @@ fun PalabroTheme(
     Log.d("PalabroThemeCheck", "Aplicando el tema: $themeStyle")
 
     val isDark = when (themeStyle) {
-        ThemeStyle.LIGHT -> false
-        ThemeStyle.PASTEL -> false
-        ThemeStyle.RETRO -> false
-        ThemeStyle.DARK -> true
-        ThemeStyle.DRACULA -> true
-        ThemeStyle.HACKER -> true
+        ThemeStyle.LIGHT, ThemeStyle.PASTEL, ThemeStyle.RETRO -> false
+        ThemeStyle.DARK, ThemeStyle.DRACULA, ThemeStyle.SOLARIZED -> true
         ThemeStyle.SYSTEM -> isSystemInDarkTheme()
     }
 
     val colorScheme = when (themeStyle) {
         ThemeStyle.DARK -> DarkColorScheme
         ThemeStyle.DRACULA -> DraculaColorScheme
-        ThemeStyle.HACKER -> HackerColorScheme
         ThemeStyle.PASTEL -> PastelColorScheme
         ThemeStyle.RETRO -> RetroColorScheme
+        ThemeStyle.SOLARIZED -> SolarizedColorScheme
         else -> if (isDark) DarkColorScheme else LightColorScheme
     }
 
     val gameColors = when (themeStyle) {
         ThemeStyle.DARK -> DarkGameColors
         ThemeStyle.DRACULA -> DraculaGameColors
-        ThemeStyle.HACKER -> HackerGameColors
         ThemeStyle.PASTEL -> PastelGameColors
         ThemeStyle.RETRO -> RetroGameColors
+        ThemeStyle.SOLARIZED -> SolarizedGameColors
         else -> if (isDark) DarkGameColors else LightGameColors
+    }
+
+    // --- NUEVO: Configuración de colores de teclado ---
+    val keyboardColors = when (themeStyle) {
+        ThemeStyle.DARK -> DarkKeyboardColors
+        ThemeStyle.DRACULA -> DraculaKeyboardColors
+        ThemeStyle.PASTEL -> PastelKeyboardColors
+        ThemeStyle.RETRO -> RetroKeyboardColors
+        ThemeStyle.SOLARIZED -> SolarizedKeyboardColors
+        else -> if (isDark) DarkKeyboardColors else LightKeyboardColors
     }
 
     val view = LocalView.current
@@ -121,7 +126,11 @@ fun PalabroTheme(
         }
     }
 
-    CompositionLocalProvider(LocalGameColors provides gameColors) {
+    // Proveemos ambos grupos de colores a la app
+    CompositionLocalProvider(
+        LocalGameColors provides gameColors,
+        LocalKeyboardColors provides keyboardColors
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,
