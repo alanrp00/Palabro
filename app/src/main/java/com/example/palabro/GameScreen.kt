@@ -144,7 +144,7 @@ fun LetterBox(
             },
         color = surfaceColor,
         border = BorderStroke(2.dp, if (status != null) Color.Transparent else borderColor),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(12.dp),
     ) {
         Box(
             contentAlignment = Alignment.Center
