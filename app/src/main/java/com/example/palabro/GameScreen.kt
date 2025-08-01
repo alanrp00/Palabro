@@ -40,13 +40,11 @@ fun GameScreen(gameViewModel: GameViewModel) {
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        Spacer(Modifier.height(25.dp))
+
         // Añadimos el título "Palabro"
-        Text(
-            text = "Palabro",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+        GameTitle()
 
         Box(
             modifier = Modifier
