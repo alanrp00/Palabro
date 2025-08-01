@@ -125,9 +125,9 @@ fun LetterBox(
         else -> MaterialTheme.colorScheme.background
     }
     val borderColor = when {
-        isCurrentLetter -> MaterialTheme.colorScheme.onBackground
+        isCurrentLetter -> MaterialTheme.colorScheme.primary
         isActiveRow && letter != null -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-        letter == null -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
+        letter == null -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
         else -> Color.Transparent
     }
     val surfaceColor = if (isActiveRow && status != null) {

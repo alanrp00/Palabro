@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 enum class ThemeStyle {
-    SYSTEM, LIGHT, DARK, DRACULA, HACKER, PASTEL, RETRO
+    SYSTEM, LIGHT, DARK, DRACULA, Solarized, PASTEL, RETRO
 }
 
 // Creamos un "proveedor" de CompositionLocal para nuestros colores de juego
@@ -48,13 +48,13 @@ private val DraculaColorScheme = darkColorScheme(
     onSurface = DraculaOnSurface,
 )
 
-private val HackerColorScheme = darkColorScheme(
-    primary = HackerPrimary,
-    background = HackerBackground,
-    surface = HackerSurface,
-    onPrimary = HackerOnPrimary,
-    onBackground = HackerOnBackground,
-    onSurface = HackerOnSurface,
+private val SolarizedColorScheme = darkColorScheme(
+    primary = SolarizedPrimary,
+    background = SolarizedBackground,
+    surface = SolarizedSurface,
+    onPrimary = SolarizedOnPrimary,
+    onBackground = SolarizedOnBackground,
+    onSurface = SolarizedOnSurface,
 )
 
 private val PastelColorScheme = lightColorScheme(
@@ -89,14 +89,14 @@ fun PalabroTheme(
         ThemeStyle.RETRO -> false
         ThemeStyle.DARK -> true
         ThemeStyle.DRACULA -> true
-        ThemeStyle.HACKER -> true
+        ThemeStyle.Solarized -> true
         ThemeStyle.SYSTEM -> isSystemInDarkTheme()
     }
 
     val colorScheme = when (themeStyle) {
         ThemeStyle.DARK -> DarkColorScheme
         ThemeStyle.DRACULA -> DraculaColorScheme
-        ThemeStyle.HACKER -> HackerColorScheme
+        ThemeStyle.Solarized -> SolarizedColorScheme
         ThemeStyle.PASTEL -> PastelColorScheme
         ThemeStyle.RETRO -> RetroColorScheme
         else -> if (isDark) DarkColorScheme else LightColorScheme
@@ -105,7 +105,7 @@ fun PalabroTheme(
     val gameColors = when (themeStyle) {
         ThemeStyle.DARK -> DarkGameColors
         ThemeStyle.DRACULA -> DraculaGameColors
-        ThemeStyle.HACKER -> HackerGameColors
+        ThemeStyle.Solarized -> SolarizedGameColors
         ThemeStyle.PASTEL -> PastelGameColors
         ThemeStyle.RETRO -> RetroGameColors
         else -> if (isDark) DarkGameColors else LightGameColors
