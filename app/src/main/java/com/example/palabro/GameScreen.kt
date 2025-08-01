@@ -3,7 +3,6 @@ package com.example.palabro
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,17 +24,13 @@ import kotlinx.coroutines.delay
 @Composable
 fun GameScreen(gameViewModel: GameViewModel) {
     val uiState by gameViewModel.uiState.collectAsState()
-
     val shakeController = remember { Animatable(0f) }
 
     LaunchedEffect(uiState.triggerShake) {
         if (uiState.triggerShake > 0) {
             shakeController.animateTo(1f, animationSpec = tween(durationMillis = 600))
             shakeController.snapTo(0f)
-            // --- INICIO DE LA CORRECCIÓN ---
-            // Le decimos al ViewModel que la animación ya se ha completado.
             gameViewModel.onShakeAnimationCompleted()
-            // --- FIN DE LA CORRECCIÓN ---
         }
     }
 
@@ -45,9 +40,12 @@ fun GameScreen(gameViewModel: GameViewModel) {
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        WordLengthSelector(
-            selectedLength = uiState.wordLength,
-            onLengthSelected = { gameViewModel.changeWordLength(it) }
+        // Añadimos el título "Palabro"
+        Text(
+            text = "Palabro",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(vertical = 8.dp)
         )
 
         Box(
@@ -64,7 +62,6 @@ fun GameScreen(gameViewModel: GameViewModel) {
                 uiState = uiState
             )
         }
-
         GameKeyboard(
             keyStatuses = uiState.keyStatuses,
             onKeyClick = { gameViewModel.onKey(it) }
@@ -98,6 +95,7 @@ fun GameScreen(gameViewModel: GameViewModel) {
     }
 }
 
+// ... (El resto de funciones auxiliares como LetterBox, GameBoard, etc. se mantienen igual)
 
 @Composable
 fun LetterBox(
@@ -111,22 +109,16 @@ fun LetterBox(
     val gameColors = LocalGameColors.current
     val rotation = remember { Animatable(0f) }
 
-    // Este LaunchedEffect ejecuta la animación hacia adelante
     LaunchedEffect(isRevealed) {
         if (isRevealed) {
             rotation.animateTo(180f, animationSpec = tween(durationMillis = 800))
         }
     }
-
-    // --- INICIO DE LA CORRECCIÓN ---
-    // Este LaunchedEffect resetea la animación si la casilla se vacía
     LaunchedEffect(letter, status) {
         if (letter == null && status == null) {
             rotation.snapTo(0f)
         }
     }
-    // --- FIN DE LA CORRECCIÓN ---
-
 
     val revealedColor = when (status) {
         LetterStatus.CORRECT -> gameColors.correct
@@ -134,14 +126,12 @@ fun LetterBox(
         LetterStatus.INCORRECT -> gameColors.incorrect
         else -> MaterialTheme.colorScheme.background
     }
-
     val borderColor = when {
         isCurrentLetter -> MaterialTheme.colorScheme.onBackground
         isActiveRow && letter != null -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         letter == null -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
         else -> Color.Transparent
     }
-
     val surfaceColor = if (isActiveRow && status != null) {
         revealedColor
     } else {
@@ -179,7 +169,6 @@ fun LetterBox(
     }
 }
 
-
 @Composable
 fun WordRow(
     guess: Guess,
@@ -191,7 +180,6 @@ fun WordRow(
     val revealedStates = remember(wordLength) {
         mutableStateListOf<Boolean>().apply { addAll(List(wordLength) { false }) }
     }
-
     LaunchedEffect(guess.isRevealed) {
         if (guess.isRevealed) {
             for (i in 0 until wordLength) {
@@ -200,9 +188,7 @@ fun WordRow(
             }
         }
     }
-
     var guessPointer = 0
-
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -210,7 +196,6 @@ fun WordRow(
         for (i in 0 until wordLength) {
             val letter: Char?
             val status: LetterStatus?
-
             if (isActiveRow) {
                 if (revealedHints.containsKey(i)) {
                     letter = revealedHints[i]
@@ -226,13 +211,10 @@ fun WordRow(
                 letter = guess.word.getOrNull(i)
                 status = guess.statuses?.getOrNull(i)
             }
-
             val nextFreeSlot = (0 until wordLength).firstOrNull { j -> !revealedHints.containsKey(j) } ?: 0
             val cursorPosition = (nextFreeSlot until wordLength)
                 .find { j -> !revealedHints.containsKey(j) && j >= guessPointer } ?: guessPointer
-
             val isCurrentLetter = isActiveRow && i == cursorPosition
-
             LetterBox(
                 letter = letter,
                 status = status,
@@ -246,51 +228,6 @@ fun WordRow(
 }
 
 @Composable
-fun WordLengthSelector(
-    selectedLength: Int,
-    onLengthSelected: (Int) -> Unit
-) {
-    val options = listOf(5, 6, 7)
-    val cornerRadius = 24.dp // Definimos un radio de esquina más sutil
-
-    // El Surface exterior crea el fondo y el borde del control
-    Surface(
-        shape = RoundedCornerShape(cornerRadius), // Usamos el nuevo radio
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
-    ) {
-        Row {
-            options.forEach { length ->
-                val isSelected = selectedLength == length
-
-                val backgroundColor by androidx.compose.animation.animateColorAsState(
-                    targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                    animationSpec = tween(durationMillis = 300),
-                    label = "BackgroundColorAnimation"
-                )
-
-                val contentColor by androidx.compose.animation.animateColorAsState(
-                    targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                    animationSpec = tween(durationMillis = 300),
-                    label = "ContentColorAnimation"
-                )
-
-                // Usamos un Box para que el click ocupe todo el espacio
-                Box(
-                    modifier = Modifier
-                        .background(backgroundColor, shape = RoundedCornerShape(cornerRadius))
-                        .clickable { onLengthSelected(length) }
-                        .padding(horizontal = 24.dp, vertical = 10.dp)
-                ) {
-                    Text(text = "$length Letras", color = contentColor)
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
 fun GameBoard(
     wordLength: Int,
     submittedGuesses: List<Guess>,
@@ -300,7 +237,6 @@ fun GameBoard(
 ) {
     val maxAttempts = 6
     val currentAttemptIndex = submittedGuesses.size
-
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.fillMaxWidth(0.9f)
@@ -311,11 +247,9 @@ fun GameBoard(
                 i == currentAttemptIndex -> Guess(word = currentGuess, statuses = null)
                 else -> Guess(word = "", statuses = null)
             }
-
             val rowOffset = if (i == currentAttemptIndex) {
                 (kotlin.math.sin(shakeOffset * 4 * Math.PI) * 10).toFloat()
             } else 0f
-
             WordRow(
                 guess = guess,
                 wordLength = wordLength,
@@ -327,7 +261,6 @@ fun GameBoard(
     }
 }
 
-
 @Composable
 fun KeyboardKey(
     key: String,
@@ -335,25 +268,19 @@ fun KeyboardKey(
     onKeyClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // --- INICIO DE LA LÓGICA DE COLOR ---
-    // El color de la letra ahora depende del estado (status)
     val contentColor = when (status) {
         LetterStatus.CORRECT -> LocalGameColors.current.correct
         LetterStatus.WRONG_POSITION -> LocalGameColors.current.wrongPosition
-        LetterStatus.INCORRECT -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) // Gris atenuado
-        null -> MaterialTheme.colorScheme.onSurface // Color por defecto
+        LetterStatus.INCORRECT -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+        null -> MaterialTheme.colorScheme.onSurface
     }
-
-    // El fondo de la tecla ahora es sutil
     val backgroundColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
-    // --- FIN DE LA LÓGICA DE COLOR ---
-
     Surface(
         modifier = modifier
             .height(56.dp)
             .clickable { onKeyClick(key) },
-        color = backgroundColor, // Usamos el nuevo fondo sutil
-        shape = RoundedCornerShape(8.dp) // Un poco más redondeado para ir con las casillas
+        color = backgroundColor,
+        shape = RoundedCornerShape(8.dp)
     ) {
         Box(contentAlignment = Alignment.Center) {
             when (key) {
@@ -363,7 +290,7 @@ fun KeyboardKey(
                     text = key,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = contentColor // El color del texto es ahora dinámico
+                    color = contentColor
                 )
             }
         }
@@ -375,7 +302,6 @@ fun GameKeyboard(keyStatuses: Map<Char, LetterStatus>, onKeyClick: (String) -> U
     val row1 = "QWERTYUIOP"
     val row2 = "ASDFGHJKLÑ"
     val row3 = "ZXCVBNM"
-
     Column(
         modifier = Modifier.padding(horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -421,7 +347,6 @@ fun KeyboardRow(
 fun GameResultDialog(status: GameStatus, secretWord: String, onDismiss: () -> Unit) {
     val title = if (status == GameStatus.WON) "¡Has Ganado!" else "¡Has Perdido!"
     val message = "La palabra era: $secretWord"
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(text = title, fontWeight = FontWeight.Bold) },
