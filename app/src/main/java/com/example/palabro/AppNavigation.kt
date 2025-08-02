@@ -59,23 +59,14 @@ fun AppNavigation() {
             topBar = {
                 TopAppBar(
                     title = {
-                        Box(
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            if (currentRoute == AppRoutes.GAME) {
-                                WordLengthSelector(
-                                    selectedLength = uiState.wordLength,
-                                    onLengthSelected = { gameViewModel.changeWordLength(it) }
-                                )
-                            } else {
-                                val titleText = when (currentRoute) {
-                                    AppRoutes.SETTINGS -> "Ajustes"
-                                    AppRoutes.STATS -> "Estadísticas"
-                                    else -> ""
-                                }
-                                Text(titleText, fontWeight = FontWeight.Bold)
-                            }
+                            WordLengthSelector(
+                                selectedLength = uiState.wordLength,
+                                onLengthSelected = { gameViewModel.changeWordLength(it) }
+                            )
                         }
                     },
                     navigationIcon = {
@@ -84,18 +75,13 @@ fun AppNavigation() {
                         }
                     },
                     actions = {
-                        // --- INICIO DE LA CORRECCIÓN ---
-                        // El botón de la pista está aquí, y su visibilidad depende de la ruta.
                         if (currentRoute == AppRoutes.GAME) {
                             IconButton(onClick = { gameViewModel.onHintPressed() }) {
                                 Icon(Icons.Default.Lightbulb, contentDescription = "Pista")
                             }
                         } else {
-                            // Cuando no estamos en el juego, dejamos un espacio en blanco
-                            // del mismo tamaño que un icono para que el título se centre bien.
                             Spacer(Modifier.width(48.dp))
                         }
-                        // --- FIN DE LA CORRECCIÓN ---
                     }
                 )
             }
@@ -120,18 +106,19 @@ fun AppNavigation() {
 }
 
 
-// --- VERSIÓN COMPACTA DEL WORDLENGTHSELECTOR RESTAURADA ---
 @Composable
 fun WordLengthSelector(
     selectedLength: Int,
     onLengthSelected: (Int) -> Unit
 ) {
-    val options = listOf(5, 6, 7)
+    // --- INICIO DE LA CORRECCIÓN ---
+    val options = mapOf(5 to "Fácil", 6 to "Normal", 7 to "Difícil")
+    // --- FIN DE LA CORRECCIÓN ---
 
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        options.forEachIndexed { index, length ->
+        options.entries.forEachIndexed { index, (length, label) ->
             val isSelected = selectedLength == length
             val contentColor by androidx.compose.animation.animateColorAsState(
                 targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -140,7 +127,7 @@ fun WordLengthSelector(
             )
 
             Text(
-                text = "$length Letras",
+                text = label, // Usamos la nueva etiqueta
                 color = contentColor,
                 fontSize = 14.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,

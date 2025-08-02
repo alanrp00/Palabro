@@ -41,11 +41,11 @@ fun GameScreen(gameViewModel: GameViewModel) {
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        Spacer(Modifier.height(25.dp))
-
-        // Añadimos el título "Palabro"
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Ponemos el título personalizado y un espacio, en lugar del selector duplicado
+        Spacer(Modifier.height(16.dp))
         GameTitle()
+        // --- FIN DE LA CORRECCIÓN ---
 
         Box(
             modifier = Modifier
@@ -74,7 +74,6 @@ fun GameScreen(gameViewModel: GameViewModel) {
             onDismiss = { gameViewModel.resetGame() }
         )
     }
-
     if (uiState.showHintDialog) {
         AlertDialog(
             onDismissRequest = { gameViewModel.onHintDismiss() },
@@ -94,7 +93,6 @@ fun GameScreen(gameViewModel: GameViewModel) {
     }
 }
 
-// ... (El resto de funciones auxiliares como LetterBox, GameBoard, etc. se mantienen igual)
 
 @Composable
 fun LetterBox(
@@ -127,8 +125,8 @@ fun LetterBox(
     }
     val borderColor = when {
         isCurrentLetter -> MaterialTheme.colorScheme.primary
-        isActiveRow && letter != null -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-        letter == null -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+        isActiveRow && letter != null -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        letter == null -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
         else -> Color.Transparent
     }
     val surfaceColor = if (isActiveRow && status != null) {
@@ -176,10 +174,10 @@ fun WordRow(
     modifier: Modifier = Modifier,
     revealedHints: Map<Int, Char> = emptyMap()
 ) {
-    val revealedStates = remember(wordLength) {
+    val revealedStates = remember(wordLength, guess) {
         mutableStateListOf<Boolean>().apply { addAll(List(wordLength) { false }) }
     }
-    LaunchedEffect(guess.isRevealed) {
+    LaunchedEffect(guess) {
         if (guess.isRevealed) {
             for (i in 0 until wordLength) {
                 delay(300L)
@@ -267,8 +265,6 @@ fun KeyboardKey(
     onKeyClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // --- INICIO DE LA CORRECCIÓN ---
-    // Usamos la nueva paleta de colores específica para el teclado
     val keyboardColors = LocalKeyboardColors.current
     val contentColor = when (status) {
         LetterStatus.CORRECT -> keyboardColors.correct
@@ -276,8 +272,6 @@ fun KeyboardKey(
         LetterStatus.INCORRECT -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
         null -> MaterialTheme.colorScheme.onSurface
     }
-    // --- FIN DE LA CORRECCIÓN ---
-
     val backgroundColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
     Surface(
         modifier = modifier
