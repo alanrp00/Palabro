@@ -59,14 +59,23 @@ fun AppNavigation() {
             topBar = {
                 TopAppBar(
                     title = {
-                        Row(
+                        Box(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
+                            contentAlignment = Alignment.Center
                         ) {
-                            WordLengthSelector(
-                                selectedLength = uiState.wordLength,
-                                onLengthSelected = { gameViewModel.changeWordLength(it) }
-                            )
+                            if (currentRoute == AppRoutes.GAME) {
+                                WordLengthSelector(
+                                    selectedLength = uiState.wordLength,
+                                    onLengthSelected = { gameViewModel.changeWordLength(it) }
+                                )
+                            } else {
+                                val titleText = when (currentRoute) {
+                                    AppRoutes.SETTINGS -> "Ajustes"
+                                    AppRoutes.STATS -> "Estadísticas"
+                                    else -> ""
+                                }
+                                Text(titleText, fontWeight = FontWeight.Bold)
+                            }
                         }
                     },
                     navigationIcon = {
@@ -76,11 +85,28 @@ fun AppNavigation() {
                     },
                     actions = {
                         if (currentRoute == AppRoutes.GAME) {
-                            IconButton(onClick = { gameViewModel.onHintPressed() }) {
-                                Icon(Icons.Default.Lightbulb, contentDescription = "Pista")
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(end = 4.dp)
+                            ) {
+                                Text(
+                                    text = uiState.remainingHints.toString(),
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (uiState.remainingHints > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                )
+                                IconButton(
+                                    onClick = { gameViewModel.onHintPressed() },
+                                    enabled = uiState.remainingHints > 0
+                                ) {
+                                    Icon(
+                                        Icons.Default.Lightbulb,
+                                        contentDescription = "Pista",
+                                        tint = if (uiState.remainingHints > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                    )
+                                }
                             }
                         } else {
-                            Spacer(Modifier.width(48.dp))
+                            Spacer(Modifier.width(68.dp)) // Espacio para mantener el título centrado
                         }
                     }
                 )
@@ -111,23 +137,20 @@ fun WordLengthSelector(
     selectedLength: Int,
     onLengthSelected: (Int) -> Unit
 ) {
-    // --- INICIO DE LA CORRECCIÓN ---
-    val options = mapOf(5 to "Fácil", 6 to "Normal", 7 to "Difícil")
-    // --- FIN DE LA CORRECCIÓN ---
+    val options = listOf(5 to "Fácil", 6 to "Normal", 7 to "Difícil")
 
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        options.entries.forEachIndexed { index, (length, label) ->
+        options.forEachIndexed { index, (length, label) ->
             val isSelected = selectedLength == length
             val contentColor by androidx.compose.animation.animateColorAsState(
                 targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 animationSpec = tween(durationMillis = 300),
                 label = "ContentColorAnimation"
             )
-
             Text(
-                text = label, // Usamos la nueva etiqueta
+                text = label,
                 color = contentColor,
                 fontSize = 14.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
@@ -135,7 +158,6 @@ fun WordLengthSelector(
                     .clickable { onLengthSelected(length) }
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             )
-
             if (index < options.size - 1) {
                 Divider(
                     modifier = Modifier
