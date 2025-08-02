@@ -37,7 +37,7 @@ fun SettingsScreen() {
     ) {
         // --- Sección de Temas ---
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Tema", style = MaterialTheme.typography.titleLarge)
+            Text("Temas", style = MaterialTheme.typography.titleLarge)
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),

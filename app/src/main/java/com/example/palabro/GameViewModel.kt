@@ -132,7 +132,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             currentGuess = "",
             keyStatuses = emptyMap(),
             gameStatus = GameStatus.PLAYING,
-            revealedHints = emptyMap()
+            revealedHints = emptyMap(),
+            remainingHints = 3
         ) }
     }
 
@@ -140,7 +141,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             settingsManager.setWordLength(newLength)
             gameLogic = GameLogic(getApplication(), newLength)
-            _uiState.value = GameUiState(wordLength = newLength)
+            _uiState.value = GameUiState(wordLength = newLength, remainingHints = 3)
         }
     }
 
@@ -153,7 +154,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun onHintConfirm() {
         val hint = gameLogic.getHint(uiState.value.currentGuess, uiState.value.revealedHints)
 
-        if (hint != null) {
+        if (uiState.value.remainingHints > 0 && hint != null) {
             val (index, letter) = hint
             val newHints = uiState.value.revealedHints + (index to letter)
 
@@ -168,7 +169,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     revealedHints = newHints,
                     showHintDialog = false,
                     currentGuess = "",
-                    keyStatuses = newKeyStatuses // Usamos el nuevo mapa de estados de teclas
+                    keyStatuses = newKeyStatuses,
+                    remainingHints = it.remainingHints - 1
                 )
             }
         } else {
@@ -193,5 +195,6 @@ data class GameUiState(
     val gameStatus: GameStatus = GameStatus.PLAYING,
     val showHintDialog: Boolean = false,
     val revealedHints: Map<Int, Char> = emptyMap(),
-    val triggerShake: Int = 0
+    val triggerShake: Int = 0,
+    val remainingHints: Int = 3
 )
