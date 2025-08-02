@@ -68,16 +68,16 @@ val DraculaKeyboardColors = KeyboardColors(
 )
 
 // --- TEMA PASTEL (CORREGIDO) ---
-val PastelPrimary = Color(0xFFB39DDB) // Lavanda suave
-val PastelBackground = Color(0xFFF5F5F5) // Un blanco roto muy claro
-val PastelSurface = Color(0xFFE0F2F1) // Menta muy pálido
-val PastelOnPrimary = Color.White
-val PastelOnBackground = Color(0xFF546E7A) // Gris azulado oscuro
-val PastelOnSurface = Color(0xFF546E7A) // Gris azulado oscuro
+val PastelPrimary = Color(0xFFe3a3da)
+val PastelBackground = Color(0xFFd6eae6)
+val PastelSurface = Color(0xFFe7e7bc)
+val PastelOnPrimary = Color(0xFFFFFFFF)
+val PastelOnBackground = Color(0xFF5D5C61)
+val PastelOnSurface = Color(0xFF5D5C61)
 val PastelGameColors = GameColors(
-    correct = Color(0xFFC5E1A5),       // Verde lima pastel
-    wrongPosition = Color(0xfff4db8f),   // Amarillo pastel
-    incorrect = Color(0xFFB0BEC5)      // Gris azulado claro
+    correct = Color(0xFF81c784),
+    wrongPosition = Color(0xffeddb92),
+    incorrect = Color(0xffed99a7)
 )
 val PastelKeyboardColors = KeyboardColors(
     correct = Color(0xFF558B2F),       // Verde oscuro para contraste
