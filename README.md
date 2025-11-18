@@ -1,25 +1,58 @@
-# Palabro 🇪🇸
+# 🎮 Palabro — Juego tipo Wordle en Android
 
-**Palabro** es un adictivo juego de adivinar palabras inspirado en Wordle, desarrollado de forma nativa para Android. A diferencia del original, ofrece partidas infinitas, múltiples modos de juego y una gran variedad de temas para personalizar la experiencia a tu gusto.
+**Palabro** es un juego inspirado en *Wordle*, desarrollado de forma nativa en Android con **Kotlin**, **Jetpack Compose** y **arquitectura MVVM**.  
+Incluye control de intentos, validación de palabras, sistema de colores, persistencia con DataStore, modo oscuro y una UI moderna totalmente hecha en Compose.
 
-## ✨ Características
+---
 
-* **Partidas Infinitas:** No tienes que esperar al día siguiente para jugar de nuevo.
-* **Múltiples Modos de Juego:** Desafía tu mente con palabras de 5, 6 o 7 letras.
-* **Estadísticas Detalladas:** Lleva un registro de tus partidas jugadas, victorias y tu porcentaje de éxito.
-* **Temas Personalizables:** Elige entre una variedad de temas (Claro, Oscuro, Dracula, Retro, Hacker, Pastel) para una experiencia visual única.
-* **Interfaz Dinámica:** La interfaz se adapta a cualquier tamaño de pantalla gracias a un diseño responsive.
-* **Diccionario Completo:** Valida que las palabras introducidas existan en un amplio diccionario en español.
-* **Feedback Inteligente:** El teclado cambia de color para ayudarte a recordar las letras usadas y su estado.
+## 🚀 Tecnologías principales
 
-## 🛠️ Tecnologías Utilizadas
+- **Kotlin**
+- **Jetpack Compose**
+- **Arquitectura MVVM**
+- **State Hoisting + State Management**
+- **DataStore Preferences**
+- **Coroutines + Flow**
+- **Android ViewModel**
+- **Material Design 3**
 
-* **Lenguaje:** [Kotlin](https://kotlinlang.org/)
-* **Interfaz de Usuario:** [Jetpack Compose](https://developer.android.com/jetpack/compose)
-* **Navegación:** [Navigation Compose](https://developer.android.com/jetpack/compose/navigation)
-* **Almacenamiento Local:** [Jetpack DataStore](https://developer.android.com/topic/libraries/architecture/datastore) para guardar ajustes y estadísticas.
-* **Arquitectura:** Single-Activity con principios MVVM.
+---
 
-## 🚀 Próximas Funcionalidades
+## ✨ Funcionalidades
 
-- [ ] Cuentas de usuario y guardado en la nube.
+### 🎯 Lógica del juego
+- Selección aleatoria de palabra objetivo  
+- Validación por letra  
+- Colores según coincidencia (correcta / correcta pero en otra posición / incorrecta)  
+- Gestión de intentos  
+- Mensajes de victoria / derrota  
+
+### 🎨 Interfaz creada en Jetpack Compose
+- UI moderna, rápida y declarativa  
+- Animaciones suaves en la interacción  
+- Diseño estilo Wordle con grillas dinámicas  
+- Botón de reinicio
+
+### 🌙 Modo oscuro / claro
+- Implementado automáticamente con Material Theme  
+- Paleta personalizada
+
+### 💾 Persistencia con DataStore
+- Guarda configuraciones  
+- Mantiene progreso básico  
+- Reemplazo moderno de SharedPreferences
+
+---
+
+<h2>📸 Capturas</h2>
+
+<div align="center">
+
+<img src="assets/palabro-dark.png" width="300" />
+<img src="assets/palabro-light.png" width="300" />
+<img src="assets/palabro-dracula.png" width="300" />
+<img src="assets/palabro-pastel.png" width="300" />
+<img src="assets/palabro-retro.png" width="300" />
+<img src="assets/palabro-solarized.png" width="300" />
+
+</div>
