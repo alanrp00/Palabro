@@ -22,8 +22,4 @@
 
 ## 🚀 Próximas Funcionalidades
 
-- [ ] Sistema de puntuación (Elo) con bonus por intentos.
 - [ ] Cuentas de usuario y guardado en la nube.
-
----
-*Proyecto desarrollado con la ayuda de Asistente de programación de Google.*
