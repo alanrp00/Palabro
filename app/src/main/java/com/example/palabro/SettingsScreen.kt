@@ -43,7 +43,7 @@ fun SettingsScreen() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ThemeStyle.values().forEach { theme ->
+                ThemeStyle.entries.forEach { theme ->
                     val isSelected = settings.themeStyle == theme
                     val selectedColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent
 
